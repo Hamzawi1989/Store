@@ -4,260 +4,276 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سلتي - نظام إدارة الطلبيات</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<title>سلتي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
-  --orange:#FF6B00;--orange2:#FF8C3A;--orange-pale:#FFF3E8;--orange-soft:#FFE0C2;
-  --bg:#FFF8F2;--card:#fff;--text:#1A0A00;--muted:#8B5E3C;--border:#FFD4A8;
-  --red:#EF4444;--green:#22C55E;--blue:#3B82F6;--purple:#8B5CF6;
-  --shadow:0 4px 24px rgba(255,107,0,0.13);--shadow-lg:0 8px 40px rgba(255,107,0,0.2);
+  --bg:#0A0A0A;
+  --bg2:#141414;
+  --bg3:#1C1C1C;
+  --gold:#D4AF37;
+  --gold2:#F0C84A;
+  --gold3:#B8960C;
+  --gold-pale:rgba(212,175,55,0.1);
+  --gold-soft:rgba(212,175,55,0.2);
+  --text:#F5F0E8;
+  --text2:#C9B99A;
+  --muted:#7A6A4A;
+  --border:rgba(212,175,55,0.25);
+  --border2:rgba(212,175,55,0.15);
+  --card:#161616;
+  --red:#EF4444;
+  --green:#22C55E;
+  --shadow:0 4px 20px rgba(0,0,0,0.5);
+  --shadow-gold:0 4px 20px rgba(212,175,55,0.2);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{opacity:0.7}50%{opacity:1}100%{opacity:0.7}}
 
-/* LOADING */
-.loading-screen{position:fixed;inset:0;background:linear-gradient(145deg,#FF6B00,#FF8C3A);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;color:white;gap:16px;}
-.loading-logo{font-size:56px;font-weight:900;letter-spacing:-2px;animation:pulse 1.2s infinite;}
-.loading-sub{font-size:15px;opacity:0.85;}
+/* ===== LOADING ===== */
+.ls{position:fixed;inset:0;background:var(–bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px;}
+.ls-logo{font-size:72px;font-weight:900;background:linear-gradient(135deg,var(–gold),var(–gold2),var(–gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-4px;animation:shimmer 1.5s infinite;}
+.ls-sub{color:var(–text2);font-size:14px;font-weight:600;letter-spacing:2px;}
 
-/* AUTH */
-#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#FF6B00,#FF8C3A,#FFB347);position:relative;overflow:hidden;}
-#authScreen::before{content:’’;position:absolute;width:500px;height:500px;background:rgba(255,255,255,0.06);border-radius:50%;top:-150px;left:-150px;}
-#authScreen::after{content:’’;position:absolute;width:350px;height:350px;background:rgba(255,255,255,0.04);border-radius:50%;bottom:-100px;right:-100px;}
-.auth-card{background:white;border-radius:28px;padding:40px 32px 36px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,0.22);position:relative;z-index:1;animation:slideUp 0.5s ease;}
+/* ===== AUTH ===== */
+#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at top,#1a1400 0%,var(–bg) 60%);padding:20px;}
+.auth-card{background:var(–card);border:1px solid var(–border);border-radius:24px;padding:40px 32px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 40px rgba(212,175,55,0.1);animation:slideUp 0.5s ease;}
 .auth-brand{text-align:center;margin-bottom:28px;}
-.auth-brand .brand-logo{font-size:52px;font-weight:900;color:var(–orange);letter-spacing:-3px;line-height:1;margin-bottom:4px;cursor:pointer;}
-.auth-brand p{color:var(–muted);font-size:13px;}
-.tab-btns{display:flex;background:var(–orange-pale);border-radius:14px;padding:4px;margin-bottom:22px;gap:4px;}
-.tab-btn{flex:1;padding:10px;border:none;border-radius:10px;background:transparent;color:var(–muted);font-family:‘Cairo’,sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.25s;}
-.tab-btn.active{background:var(–orange);color:white;box-shadow:0 4px 14px rgba(255,107,0,0.4);}
+.auth-logo-big{font-size:60px;font-weight:900;background:linear-gradient(135deg,var(–gold),var(–gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-3px;line-height:1;margin-bottom:8px;}
+.auth-tagline{color:var(–text2);font-size:13px;font-weight:600;letter-spacing:1px;}
+.tabs{display:flex;background:var(–bg3);border:1px solid var(–border2);border-radius:12px;padding:3px;margin-bottom:22px;gap:3px;}
+.tab{flex:1;padding:9px;border:none;border-radius:9px;background:transparent;color:var(–muted);font-family:‘Cairo’,sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.tab.on{background:linear-gradient(135deg,var(–gold3),var(–gold));color:#0A0A0A;}
 .fg{margin-bottom:13px;}
-.fg label{display:block;font-size:12px;font-weight:700;color:var(–muted);margin-bottom:5px;}
-.fg input,.fg select,.fg textarea{width:100%;padding:12px 14px;border:2px solid var(–border);border-radius:12px;font-family:‘Cairo’,sans-serif;font-size:14px;background:var(–orange-pale);color:var(–text);outline:none;transition:border-color 0.2s;}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(–orange);background:white;}
-.fg textarea{resize:none;height:75px;}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(–text2);margin-bottom:5px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:12px 14px;border:1px solid var(–border);border-radius:11px;font-family:‘Cairo’,sans-serif;font-size:14px;background:var(–bg3);color:var(–text);outline:none;transition:all 0.2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(–gold);box-shadow:0 0 0 3px rgba(212,175,55,0.15);}
+.fg textarea{resize:none;height:72px;}
 .fg select{cursor:pointer;appearance:none;}
-.btn-p{width:100%;padding:14px;background:linear-gradient(135deg,var(–orange),var(–orange2));color:white;border:none;border-radius:14px;font-family:‘Cairo’,sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(255,107,0,0.4);transition:all 0.2s;margin-top:6px;}
-.btn-p:hover{transform:translateY(-2px);}
-.btn-p:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
-.auth-err{background:#FEE2E2;color:var(–red);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;display:none;}
+.fg select option{background:var(–bg3);color:var(–text);}
+.btn-main{width:100%;padding:14px;background:linear-gradient(135deg,var(–gold3),var(–gold),var(–gold2));color:#0A0A0A;border:none;border-radius:12px;font-family:‘Cairo’,sans-serif;font-size:15px;font-weight:900;cursor:pointer;box-shadow:var(–shadow-gold);transition:all 0.2s;margin-top:6px;}
+.btn-main:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(212,175,55,0.4);}
+.btn-main:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.aerr{background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid rgba(239,68,68,0.3);padding:9px 13px;border-radius:10px;font-size:12px;margin-bottom:11px;display:none;font-weight:600;}
 
-/* APP */
-#appScreen{display:none;min-height:100vh;}
+/* ===== APP ===== */
+#appScreen{display:none;min-height:100vh;background:var(–bg);}
 
-/* TOPBAR */
-.topbar{background:linear-gradient(135deg,var(–orange),var(–orange2));height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;box-shadow:0 4px 20px rgba(255,107,0,0.3);position:sticky;top:0;z-index:100;}
-.topbar-brand{font-size:26px;font-weight:900;color:white;letter-spacing:-1px;cursor:pointer;transition:transform 0.2s;}
-.topbar-brand:hover{transform:scale(1.05);}
-.topbar-right{display:flex;align-items:center;gap:8px;}
-.store-pill{background:rgba(255,255,255,0.18);color:white;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.menu-btn{width:38px;height:38px;border:none;border-radius:12px;background:rgba(255,255,255,0.2);color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
-.menu-btn:hover{background:rgba(255,255,255,0.3);}
+/* ===== TOPBAR ===== */
+.topbar{background:var(–bg2);border-bottom:1px solid var(–border);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,0.5);}
+.tb-logo{font-size:28px;font-weight:900;background:linear-gradient(135deg,var(–gold),var(–gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px;cursor:pointer;user-select:none;}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-store{background:var(–gold-pale);border:1px solid var(–border);color:var(–gold);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-menu{width:36px;height:36px;border:1px solid var(–border);border-radius:10px;background:var(–gold-pale);color:var(–gold);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.tb-menu:hover{background:var(–gold-soft);}
 
-/* SIDEBAR */
-.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;backdrop-filter:blur(3px);}
-.sidebar-overlay.show{display:block;}
-.sidebar{position:fixed;top:0;right:-320px;width:300px;height:100vh;background:white;z-index:301;transition:right 0.35s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;box-shadow:-8px 0 40px rgba(0,0,0,0.15);}
-.sidebar.open{right:0;}
-.sidebar-header{background:linear-gradient(135deg,var(–orange),var(–orange2));padding:32px 20px 24px;color:white;}
-.sidebar-logo{font-size:38px;font-weight:900;letter-spacing:-2px;margin-bottom:4px;}
-.sidebar-store{font-size:13px;opacity:0.85;font-weight:600;}
-.sidebar-nav{padding:16px 12px;}
-.nav-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;cursor:pointer;transition:all 0.2s;margin-bottom:6px;font-weight:700;font-size:15px;color:var(–text);}
-.nav-item:hover{background:var(–orange-pale);}
-.nav-item.active{background:var(–orange);color:white;box-shadow:0 4px 14px rgba(255,107,0,0.4);}
-.nav-item .nav-icon{font-size:22px;width:32px;text-align:center;}
-.nav-logout{margin-top:20px;border-top:2px solid var(–border);padding-top:16px;}
-.nav-logout .nav-item{color:var(–red);}
-.nav-logout .nav-item:hover{background:#FEE2E2;}
+/* ===== SIDEBAR (RIGHT) ===== */
+.sb-ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;display:none;backdrop-filter:blur(3px);}
+.sb-ov.show{display:block;}
+.sidebar{position:fixed;top:0;right:-290px;width:270px;height:100vh;background:var(–bg2);z-index:301;transition:right 0.3s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;border-left:1px solid var(–border);}
+.sidebar.open{right:0;box-shadow:-8px 0 40px rgba(0,0,0,0.6);}
+.sb-head{background:linear-gradient(160deg,#1a1200,#0A0A0A);padding:30px 18px 22px;border-bottom:1px solid var(–border);position:relative;}
+.sb-logo{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(–gold),var(–gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px;margin-bottom:4px;}
+.sb-store{font-size:13px;color:var(–text2);font-weight:600;}
+.sb-close{position:absolute;top:14px;left:14px;width:30px;height:30px;background:var(–gold-pale);border:1px solid var(–border);border-radius:8px;color:var(–gold);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.sb-nav{padding:12px 10px;}
+.ni{display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:12px;cursor:pointer;transition:all 0.2s;margin-bottom:4px;font-weight:700;font-size:14px;color:var(–text2);border:1px solid transparent;}
+.ni:hover{background:var(–gold-pale);color:var(–gold);border-color:var(–border2);}
+.ni.on{background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.1));color:var(–gold);border-color:var(–border);}
+.ni .icon{font-size:20px;width:28px;text-align:center;}
+.sb-div{height:1px;background:var(–border2);margin:10px 0;}
 
-/* STATS BANNER */
-.stats-banner{background:linear-gradient(135deg,#1A0A00,#3D1A00);margin:14px;border-radius:20px;padding:16px;display:flex;gap:10px;}
-.stat-box{flex:1;text-align:center;}
-.stat-box .sv{font-size:16px;font-weight:900;color:var(–orange2);}
-.stat-box .sl{font-size:10px;color:rgba(255,255,255,0.6);margin-top:2px;}
-.stat-divider{width:1px;background:rgba(255,255,255,0.1);}
+/* ===== NAV TABS ===== */
+.nav-section{background:var(–bg2);border-bottom:1px solid var(–border);padding:10px 14px;}
+.store-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.store-hdr-name{font-size:15px;font-weight:900;color:var(–gold);}
+.nav-tab-row{display:flex;gap:5px;}
+.ntab{flex:1;padding:9px 6px;border:1px solid var(–border2);border-radius:11px;background:var(–bg3);color:var(–text2);font-family:‘Cairo’,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:4px;}
+.ntab.on{background:linear-gradient(135deg,var(–gold3),var(–gold));color:#0A0A0A;border-color:var(–gold);}
 
-/* FILTER CHIPS */
-.filter-bar{display:flex;gap:7px;padding:0 14px 12px;overflow-x:auto;}
-.filter-bar::-webkit-scrollbar{display:none;}
-.fchip{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all 0.2s;border:2px solid transparent;}
-.fchip.all{background:var(–orange-pale);color:var(–orange);border-color:var(–orange);}
-.fchip.s-waiting-buy{background:#FEF3C7;color:#92400E;}
-.fchip.s-buying{background:#FED7AA;color:#C2410C;}
-.fchip.s-shipping{background:#EDE9FE;color:#5B21B6;}
-.fchip.s-waiting-deliver{background:#DBEAFE;color:#1E40AF;}
-.fchip.s-delivering{background:#FEE2E2;color:#991B1B;}
-.fchip.s-not-received{background:#F1F5F9;color:#475569;}
-.fchip.active-filter{box-shadow:0 4px 12px rgba(0,0,0,0.15);transform:scale(1.05);}
+/* ===== STATS BANNER ===== */
+.stats-banner{margin:12px 14px;background:var(–card);border:1px solid var(–border);border-radius:16px;box-shadow:var(–shadow);overflow:hidden;}
+.sb-title{background:linear-gradient(135deg,#1a1200,#2a1e00);padding:10px 14px;color:var(–gold);font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(–border);}
+.sb-body{display:flex;}
+.stat-b{flex:1;padding:12px 8px;text-align:center;border-left:1px solid var(–border2);}
+.stat-b:last-child{border-left:none;}
+.stat-v{font-size:15px;font-weight:900;color:var(–gold);}
+.stat-l{font-size:10px;color:var(–muted);font-weight:600;margin-top:2px;}
 
-/* SEARCH */
-.search-wrap{padding:0 14px 12px;position:relative;}
-.search-wrap input{width:100%;padding:12px 14px 12px 42px;border:2px solid var(–border);border-radius:14px;font-family:‘Cairo’,sans-serif;font-size:14px;background:var(–card);outline:none;transition:border-color 0.2s;}
-.search-wrap input:focus{border-color:var(–orange);}
-.search-wrap .si{position:absolute;left:26px;top:50%;transform:translateY(-50%);font-size:17px;color:var(–muted);}
+/* ===== FILTER CHIPS ===== */
+.filter-wrap{padding:10px 14px 6px;display:flex;gap:6px;overflow-x:auto;}
+.filter-wrap::-webkit-scrollbar{display:none;}
+.fc{padding:7px 11px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;border:1px solid transparent;transition:all 0.2s;color:var(–text2);background:var(–bg3);}
+.fc.all{background:var(–gold-pale);color:var(–gold);border-color:var(–border);}
+.fc.on{box-shadow:0 3px 10px rgba(0,0,0,0.4);transform:scale(1.04);border-color:var(–gold)!important;color:var(–gold)!important;}
 
-/* MAIN */
+/* ===== SEARCH ===== */
+.search-wrap{padding:6px 14px 10px;position:relative;}
+.search-wrap input{width:100%;padding:11px 13px 11px 40px;border:1px solid var(–border);border-radius:13px;font-family:‘Cairo’,sans-serif;font-size:13px;background:var(–bg3);color:var(–text);outline:none;transition:all 0.2s;}
+.search-wrap input:focus{border-color:var(–gold);box-shadow:0 0 0 3px rgba(212,175,55,0.1);}
+.search-wrap input::placeholder{color:var(–muted);}
+.si{position:absolute;left:26px;top:50%;transform:translateY(-50%);font-size:16px;color:var(–muted);}
+
+/* ===== PAGES ===== */
 .page{display:none;padding:0 14px 100px;}
-.page.active{display:block;}
+.page.on{display:block;}
 
-/* ORDER CARD */
-.order-card{background:var(–card);border-radius:20px;padding:15px;margin-bottom:11px;border:2px solid var(–border);box-shadow:var(–shadow);animation:fadeIn 0.3s ease;}
-.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
-.onum{background:var(–orange);color:white;padding:4px 10px;border-radius:10px;font-size:12px;font-weight:900;}
-.odate{font-size:10px;color:var(–muted);}
-.ostatus{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;}
-.st-waiting-buy{background:#FEF3C7;color:#92400E;}
-.st-buying{background:#FED7AA;color:#C2410C;}
-.st-shipping{background:#EDE9FE;color:#5B21B6;}
-.st-waiting-deliver{background:#DBEAFE;color:#1E40AF;}
-.st-delivering{background:#FEE2E2;color:#991B1B;}
-.st-not-received{background:#F1F5F9;color:#475569;}
+/* ===== ORDER CARD ===== */
+.oc{background:var(–card);border-radius:18px;padding:14px;margin-bottom:10px;border:1px solid var(–border2);box-shadow:var(–shadow);animation:fadeIn 0.3s ease;}
+.oc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.onum{background:linear-gradient(135deg,var(–gold3),var(–gold));color:#0A0A0A;padding:4px 10px;border-radius:9px;font-size:12px;font-weight:900;}
+.odate{font-size:10px;color:var(–muted);font-weight:600;}
+.ost{padding:5px 11px;border-radius:20px;font-size:10px;font-weight:800;border:1px solid transparent;}
+.st-waiting-buy{background:rgba(234,179,8,0.15);color:#FDE047;border-color:rgba(234,179,8,0.3);}
+.st-buying{background:rgba(249,115,22,0.15);color:#FB923C;border-color:rgba(249,115,22,0.3);}
+.st-shipping{background:rgba(139,92,246,0.15);color:#C4B5FD;border-color:rgba(139,92,246,0.3);}
+.st-waiting-deliver{background:rgba(59,130,246,0.15);color:#93C5FD;border-color:rgba(59,130,246,0.3);}
+.st-delivering{background:rgba(34,197,94,0.15);color:#86EFAC;border-color:rgba(34,197,94,0.3);}
+.st-not-received{background:rgba(239,68,68,0.15);color:#FCA5A5;border-color:rgba(239,68,68,0.3);}
 
-.card-social{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(–border);}
-.sav{width:42px;height:42px;border-radius:12px;object-fit:cover;border:2px solid var(–border);}
-.sav-ph{width:42px;height:42px;border-radius:12px;background:var(–orange-pale);display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid var(–border);}
-.sname{font-weight:700;font-size:13px;color:var(–orange);}
+.oc-social{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(–border2);}
+.sav{width:42px;height:42px;border-radius:11px;object-fit:cover;border:1px solid var(–border);cursor:pointer;}
+.sav-ph{width:42px;height:42px;border-radius:11px;background:var(–bg3);display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(–border2);}
+.sname{font-weight:800;font-size:13px;color:var(–gold);}
 
-.order-imgs-row{display:flex;gap:6px;overflow-x:auto;margin-bottom:9px;padding-bottom:3px;}
-.order-imgs-row::-webkit-scrollbar{height:3px;}
-.order-imgs-row::-webkit-scrollbar-thumb{background:var(–border);border-radius:4px;}
-.order-imgs-row img{width:76px;height:76px;object-fit:cover;border-radius:10px;border:2px solid var(–border);flex-shrink:0;cursor:pointer;transition:transform 0.2s;}
-.order-imgs-row img:hover{transform:scale(1.05);}
+.imgs-scroll{display:flex;gap:6px;overflow-x:auto;margin-bottom:9px;padding-bottom:3px;}
+.imgs-scroll::-webkit-scrollbar{height:2px;}
+.imgs-scroll::-webkit-scrollbar-thumb{background:var(–border);border-radius:4px;}
+.imgs-scroll img{width:74px;height:74px;object-fit:cover;border-radius:9px;border:1px solid var(–border);flex-shrink:0;cursor:pointer;}
 
-.ocustomer{font-size:14px;font-weight:700;margin-bottom:6px;}
-.chips-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
-.chip{font-size:10px;color:var(–muted);background:var(–orange-pale);padding:3px 8px;border-radius:8px;}
-.price-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-.oprice{font-size:17px;font-weight:900;color:var(–orange);}
-.pay-badge{padding:3px 9px;border-radius:8px;font-size:10px;font-weight:700;}
-.pc{background:#D1FAE5;color:#065F46;}
-.pt{background:#DBEAFE;color:#1E40AF;}
-.pk{background:#EDE9FE;color:#5B21B6;}
-.pp{background:#D1FAE5;color:#065F46;}
-.tracking-b{background:#D1FAE5;color:#065F46;padding:3px 9px;border-radius:8px;font-size:10px;font-weight:700;margin-bottom:6px;display:inline-flex;align-items:center;gap:3px;}
-.onote{font-size:11px;color:var(–muted);background:var(–orange-pale);padding:6px 10px;border-radius:8px;margin-bottom:6px;}
-.card-footer{display:flex;gap:6px;padding-top:9px;border-top:1px solid var(–border);}
-.bsm{flex:1;padding:8px;border:none;border-radius:10px;font-family:‘Cairo’,sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:all 0.2s;}
-.be{background:var(–orange-pale);color:var(–orange);}
-.bd{background:#FEE2E2;color:var(–red);}
-.bp{background:#D1FAE5;color:#065F46;}
+.ocust{font-size:14px;font-weight:800;color:var(–text);margin-bottom:6px;}
+.cr{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
+.chip{font-size:11px;color:var(–text2);background:var(–bg3);padding:3px 9px;border-radius:8px;font-weight:600;border:1px solid var(–border2);}
+.pr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.oprice{font-size:18px;font-weight:900;color:var(–gold);}
+.pbadge{padding:5px 11px;border-radius:9px;font-size:11px;font-weight:800;border:1px solid transparent;}
+.pc{background:rgba(34,197,94,0.15);color:#86EFAC;border-color:rgba(34,197,94,0.3);}
+.pt{background:rgba(59,130,246,0.15);color:#93C5FD;border-color:rgba(59,130,246,0.3);}
+.pk{background:rgba(139,92,246,0.15);color:#C4B5FD;border-color:rgba(139,92,246,0.3);}
+.pp{background:rgba(212,175,55,0.15);color:var(–gold);border-color:var(–border);}
+.tb-badge{background:rgba(34,197,94,0.15);color:#86EFAC;border:1px solid rgba(34,197,94,0.3);padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800;margin-bottom:6px;display:inline-flex;align-items:center;gap:3px;}
+.onote{font-size:11px;color:var(–text2);background:var(–bg3);border:1px solid var(–border2);padding:6px 10px;border-radius:9px;margin-bottom:7px;font-weight:600;}
+.oc-footer{display:flex;gap:7px;padding-top:9px;border-top:1px solid var(–border2);}
+.btn-sm{flex:1;padding:9px 6px;border-radius:10px;font-family:‘Cairo’,sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all 0.2s;}
+.btn-edit{background:rgba(212,175,55,0.1);color:var(–gold);border:1px solid var(–border);}
+.btn-edit:hover{background:rgba(212,175,55,0.2);}
+.btn-pdf{background:rgba(34,197,94,0.1);color:#86EFAC;border:1px solid rgba(34,197,94,0.3);}
+.btn-pdf:hover{background:rgba(34,197,94,0.2);}
+.btn-del{background:rgba(239,68,68,0.1);color:#FCA5A5;border:1px solid rgba(239,68,68,0.3);}
+.btn-del:hover{background:rgba(239,68,68,0.2);}
 
-/* FAB */
-.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(–orange),var(–orange2));color:white;border:none;padding:14px 28px;border-radius:30px;font-family:‘Cairo’,sans-serif;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 8px 30px rgba(255,107,0,0.5);display:flex;align-items:center;gap:7px;z-index:90;transition:all 0.25s;}
-.fab:hover{transform:translateX(-50%) translateY(-3px);}
+/* ===== FAB ===== */
+.fab{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(–gold3),var(–gold),var(–gold2));color:#0A0A0A;border:none;padding:14px 28px;border-radius:30px;font-family:‘Cairo’,sans-serif;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 6px 24px rgba(212,175,55,0.4);display:flex;align-items:center;gap:7px;z-index:90;transition:all 0.25s;}
+.fab:hover{transform:translateX(-50%) translateY(-3px);box-shadow:0 10px 30px rgba(212,175,55,0.5);}
 
-/* MODAL */
-.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:200;align-items:flex-end;justify-content:center;}
+/* ===== MODAL ===== */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:200;align-items:flex-end;justify-content:center;}
 .mo.show{display:flex;}
-.modal{background:white;border-radius:26px 26px 0 0;width:100%;max-width:500px;max-height:94vh;overflow-y:auto;padding:20px 16px 32px;animation:slideUp 0.3s ease;}
+.modal{background:var(–bg2);border-radius:24px 24px 0 0;border-top:1px solid var(–border);width:100%;max-width:500px;max-height:93vh;overflow-y:auto;padding:18px 15px 32px;animation:slideUp 0.3s ease;}
 .modal::-webkit-scrollbar{display:none;}
-.mhandle{width:42px;height:5px;background:var(–border);border-radius:4px;margin:0 auto 16px;}
-.mtitle{font-size:18px;font-weight:900;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.mh{width:40px;height:4px;background:var(–border);border-radius:4px;margin:0 auto 15px;}
+.mt{font-size:17px;font-weight:900;margin-bottom:14px;display:flex;align-items:center;gap:7px;color:var(–gold);}
 .frow{display:flex;gap:9px;}
 .frow .fg{flex:1;}
-.sec{font-size:11px;font-weight:800;color:var(–orange);background:var(–orange-pale);padding:6px 12px;border-radius:10px;margin:14px 0 9px;display:flex;align-items:center;gap:6px;}
+.msec{font-size:11px;font-weight:800;color:#0A0A0A;background:linear-gradient(135deg,var(–gold3),var(–gold));padding:7px 13px;border-radius:9px;margin:14px 0 9px;display:flex;align-items:center;gap:5px;}
 
-/* IMAGE UPLOAD */
-.imgs-area{display:flex;gap:7px;overflow-x:auto;padding-bottom:5px;margin-bottom:3px;}
-.imgs-area::-webkit-scrollbar{height:3px;}
-.ithumb{position:relative;flex-shrink:0;}
-.ithumb img{width:70px;height:70px;object-fit:cover;border-radius:10px;border:2px solid var(–border);cursor:pointer;}
-.ithumb .idel{position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:var(–red);color:white;border:none;border-radius:50%;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
-.addimg{width:70px;height:70px;border:2px dashed var(–orange);border-radius:10px;background:var(–orange-pale);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(–orange);font-weight:700;flex-shrink:0;gap:2px;position:relative;}
-.addimg input{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.addimg .ai{font-size:20px;}
+.imgs-area{display:flex;gap:6px;overflow-x:auto;padding-bottom:5px;margin-bottom:3px;}
+.imgs-area::-webkit-scrollbar{height:2px;}
+.ith{position:relative;flex-shrink:0;}
+.ith img{width:68px;height:68px;object-fit:cover;border-radius:9px;border:1px solid var(–border);cursor:pointer;}
+.ith .idel{position:absolute;top:-6px;right:-6px;width:19px;height:19px;background:var(–red);color:white;border:none;border-radius:50%;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.aib{width:68px;height:68px;border:1px dashed var(–gold);border-radius:9px;background:var(–gold-pale);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(–gold);font-weight:700;flex-shrink:0;gap:2px;position:relative;}
+.aib input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.aib .ai{font-size:20px;}
 
-.av-upload{display:flex;align-items:center;gap:11px;margin-bottom:4px;}
-.av-img{width:60px;height:60px;border-radius:14px;object-fit:cover;border:2px solid var(–border);}
-.av-ph{width:60px;height:60px;border-radius:14px;background:var(–orange-pale);display:flex;align-items:center;justify-content:center;font-size:26px;border:2px dashed var(–border);}
-.av-btn{flex:1;padding:10px;border:2px dashed var(–orange);border-radius:12px;background:var(–orange-pale);color:var(–orange);font-family:‘Cairo’,sans-serif;font-size:12px;font-weight:700;cursor:pointer;text-align:center;position:relative;}
+.av-wrap{display:flex;align-items:center;gap:11px;margin-bottom:4px;}
+.av-img{width:58px;height:58px;border-radius:13px;object-fit:cover;border:1px solid var(–border);}
+.av-ph{width:58px;height:58px;border-radius:13px;background:var(–bg3);display:flex;align-items:center;justify-content:center;font-size:24px;border:1px dashed var(–border);}
+.av-btn{flex:1;padding:10px;border:1px dashed var(–gold);border-radius:11px;background:var(–gold-pale);color:var(–gold);font-family:‘Cairo’,sans-serif;font-size:12px;font-weight:700;cursor:pointer;text-align:center;position:relative;}
 .av-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;}
 
-.size-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;}
-.stag{padding:5px 11px;background:var(–orange-pale);border:2px solid var(–orange-soft);border-radius:20px;font-size:11px;font-weight:700;color:var(–orange);display:flex;align-items:center;gap:3px;}
+.stags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;}
+.stag{padding:5px 10px;background:var(–gold-pale);border:1px solid var(–border);border-radius:20px;font-size:11px;font-weight:700;color:var(–gold);display:flex;align-items:center;gap:3px;}
 .stag button{background:none;border:none;color:var(–red);cursor:pointer;font-size:13px;padding:0;line-height:1;}
-.size-row{display:flex;gap:6px;}
-.size-row input{flex:1;padding:10px 12px;border:2px solid var(–border);border-radius:10px;font-family:‘Cairo’,sans-serif;font-size:13px;background:var(–orange-pale);outline:none;}
-.size-row input:focus{border-color:var(–orange);background:white;}
-.size-row button{padding:10px 14px;background:var(–orange);color:white;border:none;border-radius:10px;font-family:‘Cairo’,sans-serif;font-weight:800;cursor:pointer;font-size:12px;white-space:nowrap;}
+.sr{display:flex;gap:6px;}
+.sr input{flex:1;padding:10px 12px;border:1px solid var(–border);border-radius:10px;font-family:‘Cairo’,sans-serif;font-size:13px;background:var(–bg3);color:var(–text);outline:none;}
+.sr input:focus{border-color:var(–gold);}
+.sr button{padding:10px 14px;background:linear-gradient(135deg,var(–gold3),var(–gold));color:#0A0A0A;border:none;border-radius:10px;font-family:‘Cairo’,sans-serif;font-weight:900;cursor:pointer;font-size:12px;white-space:nowrap;}
 
-.status-opts{display:flex;flex-direction:column;gap:6px;}
-.sopt{display:flex;align-items:center;gap:9px;padding:10px 13px;border:2px solid var(–border);border-radius:11px;cursor:pointer;background:var(–orange-pale);}
-.sopt:has(input:checked){border-color:var(–orange);background:white;}
-.sopt input[type=radio]{accent-color:var(–orange);width:15px;height:15px;}
-.sopt label{cursor:pointer;font-weight:700;font-size:12px;}
-.tracking-inp{display:none;margin-top:7px;}
-.tracking-inp.show{display:block;}
+.sopts{display:flex;flex-direction:column;gap:6px;}
+.sopt{display:flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid var(–border2);border-radius:11px;cursor:pointer;background:var(–bg3);transition:all 0.2s;}
+.sopt:has(input:checked){border-color:var(–gold);background:var(–gold-pale);}
+.sopt input[type=radio]{accent-color:var(–gold);width:15px;height:15px;}
+.sopt label{cursor:pointer;font-weight:700;font-size:13px;color:var(–text);}
+.tinp{display:none;margin-top:8px;}
+.tinp.show{display:block;}
+.tinp-label{font-size:11px;font-weight:700;color:var(–text2);display:block;margin-bottom:5px;}
+.tinp input{width:100%;padding:11px 13px;border:1px solid var(–border);border-radius:10px;font-family:‘Cairo’,sans-serif;font-size:13px;background:var(–bg3);color:var(–text);outline:none;}
+.tinp input:focus{border-color:var(–gold);}
 
-.mfooter{display:flex;gap:9px;margin-top:16px;}
-.bcancel{flex:1;padding:13px;border:2px solid var(–border);border-radius:13px;background:white;font-family:‘Cairo’,sans-serif;font-size:13px;font-weight:700;color:var(–muted);cursor:pointer;}
-.bsave{flex:2;padding:13px;background:linear-gradient(135deg,var(–orange),var(–orange2));color:white;border:none;border-radius:13px;font-family:‘Cairo’,sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(255,107,0,0.4);}
-.bsave:disabled{opacity:0.6;cursor:not-allowed;}
+.mfoot{display:flex;gap:9px;margin-top:15px;}
+.bcancel{flex:1;padding:12px;border:1px solid var(–border);border-radius:12px;background:var(–bg3);font-family:‘Cairo’,sans-serif;font-size:13px;font-weight:800;color:var(–text2);cursor:pointer;}
+.bsave{flex:2;padding:12px;background:linear-gradient(135deg,var(–gold3),var(–gold),var(–gold2));color:#0A0A0A;border:none;border-radius:12px;font-family:‘Cairo’,sans-serif;font-size:13px;font-weight:900;cursor:pointer;box-shadow:var(–shadow-gold);}
+.bsave:disabled{opacity:0.5;cursor:not-allowed;}
 
-/* CONFIRM */
-.confirm-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
-.confirm-ov.show{display:flex;}
-.confirm-box{background:white;border-radius:22px;padding:28px 20px;width:86%;max-width:320px;text-align:center;}
-.confirm-box .ci{font-size:48px;margin-bottom:9px;}
-.confirm-box h3{font-size:16px;font-weight:800;margin-bottom:6px;}
-.confirm-box p{color:var(–muted);font-size:12px;margin-bottom:16px;}
+/* ===== CONFIRM ===== */
+.cov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.cov.show{display:flex;}
+.cbox{background:var(–bg2);border:1px solid var(–border);border-radius:20px;padding:28px 20px;width:85%;max-width:320px;text-align:center;}
+.ci{font-size:48px;margin-bottom:8px;}
+.cbox h3{font-size:16px;font-weight:800;margin-bottom:6px;color:var(–text);}
+.cbox p{color:var(–muted);font-size:12px;margin-bottom:15px;font-weight:600;}
 .cbts{display:flex;gap:9px;}
-.bno{flex:1;padding:11px;border:2px solid var(–border);border-radius:11px;background:white;font-family:‘Cairo’,sans-serif;font-weight:700;cursor:pointer;}
-.byes{flex:1;padding:11px;background:var(–red);color:white;border:none;border-radius:11px;font-family:‘Cairo’,sans-serif;font-weight:700;cursor:pointer;}
+.bno{flex:1;padding:11px;border:1px solid var(–border);border-radius:11px;background:var(–bg3);font-family:‘Cairo’,sans-serif;font-weight:800;cursor:pointer;color:var(–text2);}
+.byes{flex:1;padding:11px;background:var(–red);color:white;border:none;border-radius:11px;font-family:‘Cairo’,sans-serif;font-weight:800;cursor:pointer;}
 
-/* IMAGE VIEWER */
-.img-viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;align-items:center;justify-content:center;flex-direction:column;}
-.img-viewer.show{display:flex;}
-.img-viewer img{max-width:95vw;max-height:85vh;border-radius:12px;object-fit:contain;}
-.img-viewer-close{position:absolute;top:20px;right:20px;width:42px;height:42px;background:rgba(255,255,255,0.15);border:none;border-radius:50%;color:white;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+/* ===== IMAGE VIEWER ===== */
+.iv{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:500;align-items:center;justify-content:center;}
+.iv.show{display:flex;}
+.iv img{max-width:95vw;max-height:88vh;border-radius:12px;object-fit:contain;}
+.iv-x{position:absolute;top:18px;right:18px;width:40px;height:40px;background:rgba(212,175,55,0.2);border:1px solid var(–border);border-radius:50%;color:var(–gold);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
-/* INVENTORY */
-.inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.inv-card{background:var(–card);border-radius:16px;padding:12px;border:2px solid var(–border);box-shadow:var(–shadow);animation:fadeIn 0.3s ease;}
-.inv-card img{width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:8px;border:2px solid var(–border);cursor:pointer;}
-.inv-card .iph{width:100%;height:120px;background:var(–orange-pale);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:8px;}
-.inv-card .isize{font-size:11px;color:var(–muted);background:var(–orange-pale);padding:3px 8px;border-radius:8px;display:inline-block;margin-bottom:5px;}
-.inv-card .iprice{font-size:15px;font-weight:900;color:var(–orange);}
-.inv-card .ifoot{display:flex;gap:5px;margin-top:7px;}
-.inv-total{background:linear-gradient(135deg,#1A0A00,#3D1A00);border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
-.inv-total .itl{color:rgba(255,255,255,0.7);font-size:12px;}
-.inv-total .itv{color:var(–orange2);font-size:18px;font-weight:900;}
+/* ===== INVENTORY ===== */
+.inv-total{background:var(–card);border:1px solid var(–border);border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(–shadow);}
+.itl{font-size:12px;color:var(–text2);font-weight:700;}
+.itv{font-size:18px;font-weight:900;color:var(–gold);}
+.inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.icard{background:var(–card);border-radius:14px;padding:11px;border:1px solid var(–border2);box-shadow:var(–shadow);animation:fadeIn 0.3s ease;}
+.icard img{width:100%;height:110px;object-fit:cover;border-radius:9px;margin-bottom:7px;border:1px solid var(–border);cursor:pointer;}
+.icard .iph{width:100%;height:110px;background:var(–bg3);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:7px;}
+.icard .isi{font-size:11px;color:var(–text2);background:var(–bg3);border:1px solid var(–border2);padding:3px 8px;border-radius:7px;display:inline-block;margin-bottom:5px;font-weight:600;}
+.icard .ipr{font-size:14px;font-weight:900;color:var(–gold);}
 
-/* BLACKLIST */
-.bl-card{background:var(–card);border-radius:16px;padding:14px;margin-bottom:10px;border:2px solid #FEE2E2;box-shadow:var(–shadow);animation:fadeIn 0.3s ease;}
-.bl-card .brat{padding:4px 10px;border-radius:10px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px;margin-bottom:8px;}
-.rat-bad{background:#FEF3C7;color:#92400E;}
-.rat-verybad{background:#FEE2E2;color:#991B1B;}
-.bl-name{font-size:14px;font-weight:800;margin-bottom:5px;}
-.bl-chips{display:flex;gap:5px;flex-wrap:wrap;}
+/* ===== BLACKLIST ===== */
+.blcard{background:var(–card);border-radius:14px;padding:13px;margin-bottom:9px;border:1px solid rgba(239,68,68,0.3);box-shadow:var(–shadow);animation:fadeIn 0.3s ease;}
+.brat{padding:4px 10px;border-radius:9px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:3px;margin-bottom:7px;border:1px solid transparent;}
+.rb{background:rgba(234,179,8,0.15);color:#FDE047;border-color:rgba(234,179,8,0.3);}
+.rvb{background:rgba(239,68,68,0.15);color:#FCA5A5;border-color:rgba(239,68,68,0.3);}
+.blname{font-size:14px;font-weight:800;margin-bottom:5px;color:var(–text);}
 
-/* PAGE TITLES */
-.page-title{font-size:18px;font-weight:900;color:var(–text);margin-bottom:14px;display:flex;align-items:center;gap:8px;padding:4px 0;}
-
-/* TOAST */
-.toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A0A00;color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;}
+/* ===== MISC ===== */
+.ptitle{font-size:16px;font-weight:900;color:var(–gold);margin-bottom:12px;display:flex;align-items:center;gap:7px;padding:4px 0;}
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(20px);background:var(–bg2);border:1px solid var(–border);color:var(–gold);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;box-shadow:var(–shadow-gold);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
 .empty{text-align:center;padding:50px 20px;color:var(–muted);}
-.empty .ei{font-size:56px;margin-bottom:12px;}
-.empty h3{font-size:16px;font-weight:700;margin-bottom:5px;color:var(–text);}
+.ei{font-size:52px;margin-bottom:11px;}
+.empty h3{font-size:15px;font-weight:700;margin-bottom:5px;color:var(–text2);}
+.empty p{font-size:12px;font-weight:600;}
 </style>
 
 </head>
 <body>
 
-<div class="loading-screen" id="loadingScreen">
-  <div class="loading-logo">سلتي</div>
-  <div class="loading-sub">نظام إدارة الطلبيات</div>
+<!-- LOADING -->
+
+<div class="ls" id="ls">
+  <div class="ls-logo">سلتي</div>
+  <div class="ls-sub">نظام إدارة الطلبيات</div>
 </div>
 
 <!-- AUTH -->
@@ -265,24 +281,24 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 <div id="authScreen" style="display:none">
   <div class="auth-card">
     <div class="auth-brand">
-      <div class="brand-logo">سلتي</div>
-      <p>نظام إدارة الطلبيات الاحترافي</p>
+      <div class="auth-logo-big">سلتي</div>
+      <div class="auth-tagline">نظام إدارة الطلبيات الاحترافي</div>
     </div>
-    <div class="tab-btns">
-      <button class="tab-btn active" onclick="switchTab('login')">تسجيل الدخول</button>
-      <button class="tab-btn" onclick="switchTab('register')">إنشاء حساب</button>
+    <div class="tabs">
+      <button class="tab on" onclick="swTab('login')">تسجيل الدخول</button>
+      <button class="tab" onclick="swTab('reg')">إنشاء حساب</button>
     </div>
-    <div class="auth-err" id="authError"></div>
-    <div id="loginForm">
-      <div class="fg"><label>📧 البريد الإلكتروني</label><input type="email" id="loginEmail" placeholder="example@email.com"></div>
-      <div class="fg"><label>🔑 كلمة المرور</label><input type="password" id="loginPass" placeholder="••••••••"></div>
-      <button class="btn-p" id="loginBtn" onclick="login()">🚀 دخول</button>
+    <div class="aerr" id="aerr"></div>
+    <div id="loginF">
+      <div class="fg"><label>📧 البريد الإلكتروني</label><input type="email" id="lEmail" placeholder="example@email.com"></div>
+      <div class="fg"><label>🔑 كلمة المرور</label><input type="password" id="lPass" placeholder="••••••••"></div>
+      <button class="btn-main" id="lBtn" onclick="doLogin()">🚀 دخول</button>
     </div>
-    <div id="registerForm" style="display:none">
-      <div class="fg"><label>🏪 اسم المتجر</label><input type="text" id="regStore" placeholder="اسم متجرك"></div>
-      <div class="fg"><label>📧 البريد الإلكتروني</label><input type="email" id="regEmail" placeholder="example@email.com"></div>
-      <div class="fg"><label>🔑 كلمة المرور</label><input type="password" id="regPass" placeholder="6 أحرف على الأقل"></div>
-      <button class="btn-p" id="registerBtn" onclick="register()">✨ إنشاء الحساب</button>
+    <div id="regF" style="display:none">
+      <div class="fg"><label>🏪 اسم المتجر</label><input type="text" id="rStore" placeholder="اسم متجرك"></div>
+      <div class="fg"><label>📧 البريد الإلكتروني</label><input type="email" id="rEmail" placeholder="example@email.com"></div>
+      <div class="fg"><label>🔑 كلمة المرور</label><input type="password" id="rPass" placeholder="6 أحرف على الأقل"></div>
+      <button class="btn-main" id="rBtn" onclick="doReg()">✨ إنشاء الحساب</button>
     </div>
   </div>
 </div>
@@ -290,593 +306,613 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 <!-- APP -->
 
 <div id="appScreen">
-  <!-- SIDEBAR OVERLAY -->
-  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-  <!-- SIDEBAR -->
+  <div class="sb-ov" id="sbOv" onclick="closeSB()"></div>
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">سلتي</div>
-      <div class="sidebar-store" id="sidebarStoreName">المتجر</div>
+    <div class="sb-head">
+      <button class="sb-close" onclick="closeSB()">✕</button>
+      <div class="sb-logo">سلتي</div>
+      <div class="sb-store" id="sbStore">المتجر</div>
     </div>
-    <div class="sidebar-nav">
-      <div class="nav-item active" id="nav-orders" onclick="goPage('orders')">
-        <span class="nav-icon">📦</span> طلباتي
-      </div>
-      <div class="nav-item" id="nav-inventory" onclick="goPage('inventory')">
-        <span class="nav-icon">🗄️</span> المخزن
-      </div>
-      <div class="nav-item" id="nav-blacklist" onclick="goPage('blacklist')">
-        <span class="nav-icon">⚠️</span> شوفه
-      </div>
-      <div class="nav-logout">
-        <div class="nav-item" onclick="logout()">
-          <span class="nav-icon">🚪</span> تسجيل الخروج
-        </div>
-      </div>
+    <div class="sb-nav">
+      <div class="ni on" id="sni-orders" onclick="goP('orders')"><span class="icon">📦</span> طلباتي</div>
+      <div class="ni" id="sni-inventory" onclick="goP('inventory')"><span class="icon">🗄️</span> المخزن</div>
+      <div class="ni" id="sni-blacklist" onclick="goP('blacklist')"><span class="icon">⚠️</span> شوفه</div>
+      <div class="sb-div"></div>
+      <div class="ni" style="color:#FCA5A5" onclick="doLogout()"><span class="icon">🚪</span> تسجيل الخروج</div>
     </div>
   </div>
 
-  <!-- TOPBAR -->
-
   <div class="topbar">
-    <div class="topbar-brand" onclick="location.reload()">سلتي</div>
-    <div class="topbar-right">
-      <div class="store-pill" id="storePill">المتجر</div>
-      <button class="menu-btn" onclick="openSidebar()">☰</button>
+    <div class="tb-logo" onclick="location.reload()">سلتي</div>
+    <div class="tb-right">
+      <div class="tb-store" id="tbStore">المتجر</div>
+      <button class="tb-menu" onclick="openSB()">☰</button>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="store-hdr">
+      <span style="font-size:16px">🏪</span>
+      <div class="store-hdr-name" id="storeNameNav">المتجر</div>
+    </div>
+    <div class="nav-tab-row">
+      <button class="ntab on" id="nt-orders" onclick="goP('orders')"><span>📦</span> طلباتي</button>
+      <button class="ntab" id="nt-inventory" onclick="goP('inventory')"><span>🗄️</span> المخزن</button>
+      <button class="ntab" id="nt-blacklist" onclick="goP('blacklist')"><span>⚠️</span> شوفه</button>
     </div>
   </div>
 
   <!-- ORDERS PAGE -->
 
-  <div class="page active" id="page-orders">
-    <div class="stats-banner" id="statsBanner">
-      <div class="stat-box">
-        <div class="sv" id="totalSales">0</div>
-        <div class="sl">مبيعات د.ل</div>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-box">
-        <div class="sv" id="totalProfit">0</div>
-        <div class="sl">الأرباح (50%)</div>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-box">
-        <div class="sv" id="totalCount">0</div>
-        <div class="sl">إجمالي الطلبات</div>
+  <div class="page on" id="pg-orders">
+    <div class="stats-banner" style="margin-top:12px">
+      <div class="sb-title">📊 إحصائيات المبيعات</div>
+      <div class="sb-body">
+        <div class="stat-b"><div class="stat-v" id="sTot">0</div><div class="stat-l">مبيعات د.ل</div></div>
+        <div class="stat-b"><div class="stat-v" id="sProf">0</div><div class="stat-l">أرباح 50%</div></div>
+        <div class="stat-b"><div class="stat-v" id="sCnt">0</div><div class="stat-l">الطلبات</div></div>
       </div>
     </div>
-    <div class="filter-bar" id="filterBar">
-      <div class="fchip all active-filter" id="chip-all" onclick="filterOrders('all')">📦 الكل <span id="countAll">0</span></div>
-      <div class="fchip s-waiting-buy" id="chip-waiting-buy" onclick="filterOrders('waiting-buy')">🛒 انتظار الشراء <span id="cBuy">0</span></div>
-      <div class="fchip s-buying" id="chip-buying" onclick="filterOrders('buying')">🔄 قيد الشراء <span id="cBuying">0</span></div>
-      <div class="fchip s-shipping" id="chip-shipping" onclick="filterOrders('shipping')">📦 قيد الشحن <span id="cShip">0</span></div>
-      <div class="fchip s-waiting-deliver" id="chip-waiting-deliver" onclick="filterOrders('waiting-deliver')">📫 انتظار التوصيل <span id="cWD">0</span></div>
-      <div class="fchip s-delivering" id="chip-delivering" onclick="filterOrders('delivering')">🚚 قيد التوصيل <span id="cDel">0</span></div>
-      <div class="fchip s-not-received" id="chip-not-received" onclick="filterOrders('not-received')">❌ لم يستلم <span id="cNR">0</span></div>
+    <div class="filter-wrap">
+      <div class="fc all on" id="fc-all" onclick="filt('all')">📦 الكل <span id="cAll">0</span></div>
+      <div class="fc" id="fc-waiting-buy" onclick="filt('waiting-buy')">🛒 انتظار الشراء <span id="cWB">0</span></div>
+      <div class="fc" id="fc-buying" onclick="filt('buying')">🔄 قيد الشراء <span id="cBuy">0</span></div>
+      <div class="fc" id="fc-shipping" onclick="filt('shipping')">📦 قيد الشحن <span id="cSh">0</span></div>
+      <div class="fc" id="fc-waiting-deliver" onclick="filt('waiting-deliver')">📫 انتظار التوصيل <span id="cWD">0</span></div>
+      <div class="fc" id="fc-delivering" onclick="filt('delivering')">🚚 قيد التوصيل <span id="cDel">0</span></div>
+      <div class="fc" id="fc-not-received" onclick="filt('not-received')">❌ لم يستلم <span id="cNR">0</span></div>
     </div>
-    <div class="search-wrap"><span class="si">🔍</span><input type="text" placeholder="ابحث باسم أو رقم..." oninput="searchOrders(this.value)"></div>
+    <div class="search-wrap"><span class="si">🔍</span><input type="text" placeholder="ابحث باسم أو رقم الطلب..." oninput="srch(this.value)"></div>
     <div id="ordersList"></div>
   </div>
 
   <!-- INVENTORY PAGE -->
 
-  <div class="page" id="page-inventory">
-    <div style="padding:4px 0 0">
-      <div class="page-title">🗄️ المخزن</div>
-      <div class="inv-total">
-        <div class="itl">إجمالي قيمة المخزون</div>
-        <div class="itv" id="invTotal">0 د.ل</div>
-      </div>
+  <div class="page" id="pg-inventory">
+    <div style="padding-top:12px">
+      <div class="ptitle">🗄️ المخزن</div>
+      <div class="inv-total"><div class="itl">💰 إجمالي قيمة المخزون</div><div class="itv" id="invTot">0 د.ل</div></div>
       <div class="inv-grid" id="invGrid"></div>
     </div>
   </div>
 
   <!-- BLACKLIST PAGE -->
 
-  <div class="page" id="page-blacklist">
-    <div style="padding:4px 0 0">
-      <div class="page-title">⚠️ شوفه - قائمة التحذير</div>
-      <div id="blacklistItems"></div>
+  <div class="page" id="pg-blacklist">
+    <div style="padding-top:12px">
+      <div class="ptitle">⚠️ شوفه - قائمة التحذير</div>
+      <div id="blList"></div>
     </div>
   </div>
 
-  <!-- FAB -->
-
-<button class="fab" id="fabBtn" onclick="openOrderModal()">➕ طلب جديد</button>
+<button class="fab" id="fabBtn" onclick="openOrderMo()">➕ طلب جديد</button>
 
 </div>
 
 <!-- ORDER MODAL -->
 
-<div class="mo" id="orderModal" onclick="closeMO(event)">
+<div class="mo" id="orderMo" onclick="clMO(event,'orderMo')">
   <div class="modal">
-    <div class="mhandle"></div>
-    <div class="mtitle"><span>📝</span><span id="modalTitle">طلب جديد</span></div>
-    <div class="sec">💬 معلومات الحساب</div>
-    <div class="fg"><label>اسم مستخدم فيس / واتساب / هاتف</label><input type="text" id="fSocial" placeholder="@اسم الحساب أو رقم"></div>
-    <div class="fg">
-      <label>صورة الحساب</label>
-      <div class="av-upload">
-        <div id="avWrap"><div class="av-ph" id="avPh">👤</div></div>
-        <div class="av-btn">📸 إضافة صورة الحساب<input type="file" accept="image/*" onchange="handleAvatar(event)"></div>
-      </div>
+    <div class="mh"></div>
+    <div class="mt"><span>📝</span><span id="moTitle">طلب جديد</span></div>
+
+```
+<div class="msec">💬 معلومات الحساب</div>
+<div class="fg"><label>اسم مستخدم فيس / واتساب / هاتف</label><input type="text" id="fSocial" placeholder="@اسم أو رقم الحساب"></div>
+<div class="fg">
+  <label>صورة الحساب</label>
+  <div class="av-wrap">
+    <div id="avWrap"><div class="av-ph" id="avPh">👤</div></div>
+    <div class="av-btn">📸 إضافة صورة الحساب<input type="file" accept="image/*" onchange="hAv(event)"></div>
+  </div>
+</div>
+
+<div class="msec">👤 بيانات المستلم</div>
+<div class="fg"><label>اسم المستلم *</label><input type="text" id="fCust" placeholder="الاسم الكامل للمستلم"></div>
+<div class="frow">
+  <div class="fg"><label>📱 هاتف</label><input type="tel" id="fPh1" placeholder="رقم الهاتف"></div>
+  <div class="fg"><label>📲 احتياطي</label><input type="tel" id="fPh2" placeholder="رقم احتياطي"></div>
+</div>
+<div class="fg"><label>📍 العنوان</label><input type="text" id="fAddr" placeholder="عنوان التوصيل الكامل"></div>
+
+<div class="msec">🖼️ صور الطلب (حتى 20 صورة)</div>
+<div class="imgs-area" id="imgsArea"><div class="aib"><span class="ai">📷</span><span>إضافة</span><input type="file" accept="image/*" multiple onchange="hImgs(event)"></div></div>
+
+<div class="msec">📏 المقاسات والكمية</div>
+<div class="stags" id="sizeTags"></div>
+<div class="sr" style="margin-bottom:10px">
+  <input type="text" id="sizeInp" placeholder="مثال: XL أو 42..." onkeydown="if(event.key==='Enter'){addSz();event.preventDefault();}">
+  <button onclick="addSz()">+ إضافة</button>
+</div>
+<div class="fg"><label>🔢 الكمية</label><input type="number" id="fQty" value="1" min="1"></div>
+
+<div class="msec">📊 حالة الطلب</div>
+<div class="sopts">
+  <div class="sopt"><input type="radio" name="st" id="r1" value="waiting-buy" checked onchange="stCh()"><label for="r1">🛒 انتظار الشراء</label></div>
+  <div class="sopt"><input type="radio" name="st" id="r2" value="buying" onchange="stCh()"><label for="r2">🔄 قيد الشراء</label></div>
+  <div class="sopt"><input type="radio" name="st" id="r3" value="shipping" onchange="stCh()"><label for="r3">📦 قيد الشحن</label></div>
+  <div class="sopt"><input type="radio" name="st" id="r4" value="waiting-deliver" onchange="stCh()"><label for="r4">📫 انتظار التوصيل</label></div>
+  <div class="sopt"><input type="radio" name="st" id="r5" value="delivering" onchange="stCh()"><label for="r5">🚚 قيد التوصيل</label></div>
+  <div class="sopt"><input type="radio" name="st" id="r6" value="not-received" onchange="stCh()"><label for="r6">❌ لم يستلم</label></div>
+</div>
+<!-- Tracking shown for delivering AND not-received -->
+<div class="tinp" id="trackInp">
+  <span class="tinp-label">📦 رقم تتبع شركة التوصيل</span>
+  <input type="text" id="fTrack" placeholder="أدخل رقم التتبع...">
+</div>
+
+<div class="msec">💰 السعر وطريقة الدفع</div>
+<div class="frow">
+  <div class="fg"><label>💰 السعر (د.ل)</label><input type="number" id="fPrice" placeholder="0.00"></div>
+  <div class="fg">
+    <label>💳 طريقة الدفع</label>
+    <select id="fPay">
+      <option value="cash">💵 كاش</option>
+      <option value="transfer">🏦 تحويل</option>
+      <option value="card">💳 كروت</option>
+      <option value="paid">✅ تم الدفع</option>
+    </select>
+  </div>
+</div>
+
+<div class="msec">📝 ملاحظة</div>
+<div class="fg"><textarea id="fNote" placeholder="ملاحظات إضافية على الطلب..."></textarea></div>
+
+<div class="mfoot">
+  <button class="bcancel" onclick="closeMo('orderMo')">إلغاء</button>
+  <button class="bsave" id="saveBtn" onclick="saveOrder()">💾 حفظ الطلب</button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- INV MODAL -->
+
+<div class="mo" id="invMo" onclick="clMO(event,'invMo')">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt"><span>🗄️</span><span>إضافة للمخزن</span></div>
+    <div class="fg"><label>🖼️ صورة المنتج</label>
+      <div class="imgs-area" id="invImgArea"><div class="aib"><span class="ai">📷</span><span>إضافة</span><input type="file" accept="image/*" onchange="hInvImg(event)"></div></div>
     </div>
-    <div class="sec">👤 بيانات المستلم</div>
-    <div class="fg"><label>اسم المستلم *</label><input type="text" id="fCustomer" placeholder="الاسم الكامل"></div>
-    <div class="frow">
-      <div class="fg"><label>📱 هاتف</label><input type="tel" id="fPhone" placeholder="رقم الهاتف"></div>
-      <div class="fg"><label>📲 احتياطي</label><input type="tel" id="fPhone2" placeholder="احتياطي"></div>
-    </div>
-    <div class="fg"><label>📍 العنوان</label><input type="text" id="fAddress" placeholder="عنوان التوصيل"></div>
-    <div class="sec">🖼️ صور الطلب (حتى 20 صورة)</div>
-    <div class="imgs-area" id="imgsArea">
-      <div class="addimg"><span class="ai">📷</span><span>إضافة</span><input type="file" accept="image/*" multiple onchange="handleOrderImgs(event)"></div>
-    </div>
-    <div class="sec">📏 المقاسات والكمية</div>
-    <div class="size-tags" id="sizeTags"></div>
-    <div class="size-row" style="margin-bottom:10px">
-      <input type="text" id="sizeInput" placeholder="مثال: XL أو 42..." onkeydown="if(event.key==='Enter'){addSize();event.preventDefault();}">
-      <button onclick="addSize()">+ إضافة مقاس</button>
-    </div>
-    <div class="fg"><label>🔢 الكمية</label><input type="number" id="fQty" value="1" min="1"></div>
-    <div class="sec">📊 حالة الطلب</div>
-    <div class="status-opts">
-      <div class="sopt"><input type="radio" name="st" id="st1" value="waiting-buy" checked onchange="stChanged()"><label for="st1">🛒 انتظار الشراء</label></div>
-      <div class="sopt"><input type="radio" name="st" id="st2" value="buying" onchange="stChanged()"><label for="st2">🔄 قيد الشراء</label></div>
-      <div class="sopt"><input type="radio" name="st" id="st3" value="shipping" onchange="stChanged()"><label for="st3">📦 قيد الشحن</label></div>
-      <div class="sopt"><input type="radio" name="st" id="st4" value="waiting-deliver" onchange="stChanged()"><label for="st4">📫 انتظار التوصيل</label></div>
-      <div class="sopt"><input type="radio" name="st" id="st5" value="delivering" onchange="stChanged()"><label for="st5">🚚 قيد التوصيل</label></div>
-      <div class="sopt"><input type="radio" name="st" id="st6" value="not-received" onchange="stChanged()"><label for="st6">❌ لم يستلم</label></div>
-    </div>
-    <div class="tracking-inp" id="trackingGrp">
-      <div style="margin-top:7px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">📦 رقم تتبع شركة التوصيل</label>
-        <input type="text" id="fTracking" placeholder="رقم التتبع..." style="width:100%;padding:11px 13px;border:2px solid var(--border);border-radius:11px;font-family:'Cairo',sans-serif;font-size:13px;background:var(--orange-pale);outline:none;">
-      </div>
-    </div>
-    <div class="sec">💰 السعر وطريقة الدفع</div>
-    <div class="frow">
-      <div class="fg"><label>💰 السعر (د.ل)</label><input type="number" id="fPrice" placeholder="0.00"></div>
-      <div class="fg">
-        <label>💳 طريقة الدفع</label>
-        <select id="fPayment">
-          <option value="cash">💵 كاش</option>
-          <option value="transfer">🏦 تحويل</option>
-          <option value="card">💳 كروت</option>
-          <option value="paid">✅ تم الدفع</option>
-        </select>
-      </div>
-    </div>
-    <div class="sec">📝 ملاحظة</div>
-    <div class="fg"><textarea id="fNote" placeholder="ملاحظات إضافية..."></textarea></div>
-    <div class="mfooter">
-      <button class="bcancel" onclick="closeOrderModal()">إلغاء</button>
-      <button class="bsave" id="saveBtn" onclick="saveOrder()">💾 حفظ الطلب</button>
+    <div class="fg"><label>📏 المقاس</label><input type="text" id="invSz" placeholder="مثال: XL أو 42..."></div>
+    <div class="fg"><label>💰 السعر (د.ل)</label><input type="number" id="invPr" placeholder="0.00"></div>
+    <div class="mfoot">
+      <button class="bcancel" onclick="closeMo('invMo')">إلغاء</button>
+      <button class="bsave" id="invSaveBtn" onclick="saveInv()">💾 حفظ</button>
     </div>
   </div>
 </div>
 
-<!-- INVENTORY MODAL -->
+<!-- BL MODAL -->
 
-<div class="mo" id="invModal" onclick="closeInvMO(event)">
+<div class="mo" id="blMo" onclick="clMO(event,'blMo')">
   <div class="modal">
-    <div class="mhandle"></div>
-    <div class="mtitle"><span>🗄️</span><span id="invModalTitle">إضافة للمخزن</span></div>
-    <div class="fg">
-      <label>🖼️ صورة المنتج</label>
-      <div class="imgs-area" id="invImgArea">
-        <div class="addimg"><span class="ai">📷</span><span>إضافة</span><input type="file" accept="image/*" onchange="handleInvImg(event)"></div>
-      </div>
-    </div>
-    <div class="fg"><label>📏 المقاس</label><input type="text" id="invSize" placeholder="مثال: XL أو 42..."></div>
-    <div class="fg"><label>💰 السعر (د.ل)</label><input type="number" id="invPrice" placeholder="0.00"></div>
-    <div class="mfooter">
-      <button class="bcancel" onclick="closeInvModal()">إلغاء</button>
-      <button class="bsave" id="invSaveBtn" onclick="saveInvItem()">💾 حفظ</button>
-    </div>
-  </div>
-</div>
-
-<!-- BLACKLIST MODAL -->
-
-<div class="mo" id="blModal" onclick="closeBLMO(event)">
-  <div class="modal">
-    <div class="mhandle"></div>
-    <div class="mtitle"><span>⚠️</span><span>إضافة لقائمة شوفه</span></div>
+    <div class="mh"></div>
+    <div class="mt"><span>⚠️</span><span>إضافة لقائمة شوفه</span></div>
     <div class="fg"><label>💬 اسم الحساب / واتساب</label><input type="text" id="blSocial" placeholder="@اسم أو رقم"></div>
-    <div class="fg"><label>👤 اسم المستلم</label><input type="text" id="blCustomer" placeholder="اسم الشخص"></div>
-    <div class="fg"><label>📱 هاتف</label><input type="tel" id="blPhone" placeholder="رقم الهاتف"></div>
-    <div class="fg"><label>📍 العنوان</label><input type="text" id="blAddress" placeholder="العنوان"></div>
-    <div class="fg">
-      <label>⭐ التقييم</label>
-      <select id="blRating">
+    <div class="fg"><label>👤 اسم المستلم</label><input type="text" id="blCust" placeholder="اسم الشخص"></div>
+    <div class="fg"><label>📱 هاتف</label><input type="tel" id="blPh" placeholder="رقم الهاتف"></div>
+    <div class="fg"><label>📍 العنوان</label><input type="text" id="blAddr" placeholder="العنوان"></div>
+    <div class="fg"><label>⭐ التقييم</label>
+      <select id="blRat">
         <option value="bad">😕 سيء</option>
         <option value="verybad">😡 سيء جداً</option>
       </select>
     </div>
-    <div class="mfooter">
-      <button class="bcancel" onclick="closeBLModal()">إلغاء</button>
-      <button class="bsave" onclick="saveBLItem()">💾 حفظ</button>
+    <div class="mfoot">
+      <button class="bcancel" onclick="closeMo('blMo')">إلغاء</button>
+      <button class="bsave" onclick="saveBL()">💾 حفظ</button>
     </div>
   </div>
 </div>
 
 <!-- CONFIRM -->
 
-<div class="confirm-ov" id="confirmOv">
-  <div class="confirm-box">
+<div class="cov" id="cov">
+  <div class="cbox">
     <div class="ci">🗑️</div>
     <h3>حذف نهائي؟</h3>
     <p>لا يمكن التراجع عن هذا الإجراء.</p>
     <div class="cbts">
-      <button class="bno" onclick="closeConfirm()">إلغاء</button>
-      <button class="byes" onclick="doDelete()">حذف</button>
+      <button class="bno" onclick="closeCov()">إلغاء</button>
+      <button class="byes" onclick="doDel()">حذف</button>
     </div>
   </div>
 </div>
 
-<!-- IMAGE VIEWER -->
-
-<div class="img-viewer" id="imgViewer" onclick="closeViewer()">
-  <button class="img-viewer-close" onclick="closeViewer()">✕</button>
-  <img id="viewerImg" src="" alt="">
+<div class="iv" id="iv" onclick="closeIV()">
+  <button class="iv-x" onclick="closeIV()">✕</button>
+  <img id="ivImg" src="" alt="">
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const SB_URL='https://hwbtxiijddixlzpljxtc.supabase.co';
-const SB_KEY='sb_publishable_dLuNN_oiFxsN_f4Z3oxfVA_gucBDrVy';
-const {createClient}=supabase;
-const sb=createClient(SB_URL,SB_KEY);
+const SBU='https://hwbtxiijddixlzpljxtc.supabase.co',SBK='sb_publishable_dLuNN_oiFxsN_f4Z3oxfVA_gucBDrVy';
+const {createClient}=supabase;const sb=createClient(SBU,SBK);
+let U=null,S=null,orders=[],inv=[],bl=[];
+let cFilt='all',cSrch='',editId=null,delId=null,delType=null;
+let avD=null,oImgs=[],szs=[],invImgD=null,curP='orders';
 
-let user=null,store=null,allOrders=[],allInv=[],allBL=[];
-let curFilter='all',curSearch='',editId=null,delId=null,delType=null;
-let avData=null,orderImgs=[],curSizes=[],invImgData=null,invEditId=null;
-let curPage='orders';
-
-// INIT
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
-  if(session){user=session.user;await loadStore();}
-  else showAuth();
+  if(session){U=session.user;await loadStore();}else showAuth();
 }
-function showAuth(){document.getElementById('loadingScreen').style.display='none';document.getElementById('authScreen').style.display='flex';document.getElementById('appScreen').style.display='none';}
-function showApp(){document.getElementById('loadingScreen').style.display='none';document.getElementById('authScreen').style.display='none';document.getElementById('appScreen').style.display='block';}
+function showAuth(){document.getElementById('ls').style.display='none';document.getElementById('authScreen').style.display='flex';document.getElementById('appScreen').style.display='none';}
+function showApp(){document.getElementById('ls').style.display='none';document.getElementById('authScreen').style.display='none';document.getElementById('appScreen').style.display='block';}
 
-// AUTH
-function switchTab(t){
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(t==='login'&&i===0)||(t==='register'&&i===1)));
-  document.getElementById('loginForm').style.display=t==='login'?'block':'none';
-  document.getElementById('registerForm').style.display=t==='register'?'block':'none';
-  document.getElementById('authError').style.display='none';
+function swTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',(t==='login'&&i===0)||(t==='reg'&&i===1)));
+  document.getElementById('loginF').style.display=t==='login'?'block':'none';
+  document.getElementById('regF').style.display=t==='reg'?'block':'none';
+  document.getElementById('aerr').style.display='none';
 }
-function showErr(m){const e=document.getElementById('authError');e.textContent=m;e.style.display='block';}
+function shErr(m){const e=document.getElementById('aerr');e.textContent=m;e.style.display='block';}
 
-async function register(){
-  const s=document.getElementById('regStore').value.trim(),e=document.getElementById('regEmail').value.trim(),p=document.getElementById('regPass').value;
-  if(!s||!e||!p)return showErr('الرجاء تعبئة جميع الحقول');
-  if(p.length<6)return showErr('كلمة المرور 6 أحرف على الأقل');
-  const btn=document.getElementById('registerBtn');btn.disabled=true;btn.textContent='جاري الإنشاء...';
+async function doReg(){
+  const s=document.getElementById('rStore').value.trim(),e=document.getElementById('rEmail').value.trim(),p=document.getElementById('rPass').value;
+  if(!s||!e||!p)return shErr('الرجاء تعبئة جميع الحقول');
+  if(p.length<6)return shErr('كلمة المرور 6 أحرف على الأقل');
+  const btn=document.getElementById('rBtn');btn.disabled=true;btn.textContent='جاري الإنشاء...';
   const {data,error}=await sb.auth.signUp({email:e,password:p});
-  if(error){showErr(error.message);btn.disabled=false;btn.textContent='✨ إنشاء الحساب';return;}
+  if(error){shErr(error.message);btn.disabled=false;btn.textContent='✨ إنشاء الحساب';return;}
   await sb.from('stores').insert({user_id:data.user.id,store_name:s});
-  user=data.user;await loadStore();btn.disabled=false;btn.textContent='✨ إنشاء الحساب';
+  U=data.user;await loadStore();btn.disabled=false;btn.textContent='✨ إنشاء الحساب';
 }
-async function login(){
-  const e=document.getElementById('loginEmail').value.trim(),p=document.getElementById('loginPass').value;
-  if(!e||!p)return showErr('الرجاء إدخال البريد وكلمة المرور');
-  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='جاري الدخول...';
+async function doLogin(){
+  const e=document.getElementById('lEmail').value.trim(),p=document.getElementById('lPass').value;
+  if(!e||!p)return shErr('الرجاء إدخال البريد وكلمة المرور');
+  const btn=document.getElementById('lBtn');btn.disabled=true;btn.textContent='جاري الدخول...';
   const {data,error}=await sb.auth.signInWithPassword({email:e,password:p});
-  if(error){showErr('البريد أو كلمة المرور غير صحيحة');btn.disabled=false;btn.textContent='🚀 دخول';return;}
-  user=data.user;await loadStore();btn.disabled=false;btn.textContent='🚀 دخول';
+  if(error){shErr('البريد أو كلمة المرور غير صحيحة');btn.disabled=false;btn.textContent='🚀 دخول';return;}
+  U=data.user;await loadStore();btn.disabled=false;btn.textContent='🚀 دخول';
 }
-async function logout(){await sb.auth.signOut();user=null;store=null;allOrders=[];showAuth();}
+async function doLogout(){await sb.auth.signOut();U=null;S=null;orders=[];showAuth();}
 
-// STORE
 async function loadStore(){
-  const {data,error}=await sb.from('stores').select('*').eq('user_id',user.id).single();
+  const {data,error}=await sb.from('stores').select('*').eq('user_id',U.id).single();
   if(error||!data){showAuth();return;}
-  store=data;
-  document.getElementById('storePill').textContent='🏪 '+data.store_name;
-  document.getElementById('sidebarStoreName').textContent=data.store_name;
-  showApp();await loadAll();
+  S=data;
+  document.getElementById('tbStore').textContent='🏪 '+data.store_name;
+  document.getElementById('sbStore').textContent=data.store_name;
+  document.getElementById('storeNameNav').textContent=data.store_name;
+  showApp();await Promise.all([loadOrders(),loadInv(),loadBL()]);
 }
-async function loadAll(){await loadOrders();await loadInv();await loadBL();}
 
-// SIDEBAR
-function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('show');}
-function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show');}
-function goPage(p){
-  curPage=p;
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-  document.getElementById('nav-'+p).classList.add('active');
+function openSB(){document.getElementById('sidebar').classList.add('open');document.getElementById('sbOv').classList.add('show');}
+function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOv').classList.remove('show');}
+
+function goP(p){
+  curP=p;
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  document.getElementById('pg-'+p).classList.add('on');
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
+  document.getElementById('sni-'+p)?.classList.add('on');
+  document.querySelectorAll('.ntab').forEach(x=>x.classList.remove('on'));
+  document.getElementById('nt-'+p)?.classList.add('on');
   const fab=document.getElementById('fabBtn');
-  if(p==='orders'){fab.style.display='flex';fab.textContent='';fab.innerHTML='➕ طلب جديد';fab.onclick=openOrderModal;}
-  else if(p==='inventory'){fab.style.display='flex';fab.innerHTML='➕ إضافة للمخزن';fab.onclick=openInvModal;}
-  else if(p==='blacklist'){fab.style.display='flex';fab.innerHTML='➕ إضافة لشوفه';fab.onclick=openBLModal;}
-  closeSidebar();
+  if(p==='orders'){fab.innerHTML='➕ طلب جديد';fab.onclick=openOrderMo;}
+  else if(p==='inventory'){fab.innerHTML='➕ إضافة للمخزن';fab.onclick=openInvMo;}
+  else if(p==='blacklist'){fab.innerHTML='➕ إضافة لشوفه';fab.onclick=openBLMo;}
+  closeSB();
   if(p==='inventory')renderInv();
   if(p==='blacklist')renderBL();
 }
 
-// ORDERS
 async function loadOrders(){
-  const {data}=await sb.from('orders').select('*').eq('store_id',store.id).order('num',{ascending:true});
-  allOrders=data||[];renderOrders();
+  const {data}=await sb.from('orders').select('*').eq('store_id',S.id).order('num',{ascending:true});
+  orders=data||[];renderOrders();
 }
-function getFiltered(){
-  let o=[...allOrders];
-  if(curFilter!=='all')o=o.filter(x=>x.status===curFilter);
-  if(curSearch){const q=curSearch.toLowerCase();o=o.filter(x=>x.customer.toLowerCase().includes(q)||String(x.num).includes(q)||(x.phone&&x.phone.includes(q))||(x.social&&x.social.toLowerCase().includes(q)));}
+function gFilt(){
+  let o=[...orders];
+  if(cFilt!=='all')o=o.filter(x=>x.status===cFilt);
+  if(cSrch){const q=cSrch.toLowerCase();o=o.filter(x=>x.customer.toLowerCase().includes(q)||String(x.num).includes(q)||(x.phone&&x.phone.includes(q))||(x.social&&x.social.toLowerCase().includes(q)));}
   return o;
 }
-function updateStats(){
-  const total=allOrders.reduce((s,o)=>s+(parseFloat(o.price)||0),0);
-  document.getElementById('totalSales').textContent=total.toLocaleString('ar');
-  document.getElementById('totalProfit').textContent=(total*0.5).toLocaleString('ar');
-  document.getElementById('totalCount').textContent=allOrders.length;
-  document.getElementById('countAll').textContent=allOrders.length;
-  document.getElementById('cBuy').textContent=allOrders.filter(o=>o.status==='waiting-buy').length;
-  document.getElementById('cBuying').textContent=allOrders.filter(o=>o.status==='buying').length;
-  document.getElementById('cShip').textContent=allOrders.filter(o=>o.status==='shipping').length;
-  document.getElementById('cWD').textContent=allOrders.filter(o=>o.status==='waiting-deliver').length;
-  document.getElementById('cDel').textContent=allOrders.filter(o=>o.status==='delivering').length;
-  document.getElementById('cNR').textContent=allOrders.filter(o=>o.status==='not-received').length;
+function updStats(){
+  const tot=orders.reduce((s,o)=>s+(parseFloat(o.price)||0),0);
+  document.getElementById('sTot').textContent=tot.toLocaleString('ar');
+  document.getElementById('sProf').textContent=(tot*0.5).toLocaleString('ar');
+  document.getElementById('sCnt').textContent=orders.length;
+  document.getElementById('cAll').textContent=orders.length;
+  document.getElementById('cWB').textContent=orders.filter(o=>o.status==='waiting-buy').length;
+  document.getElementById('cBuy').textContent=orders.filter(o=>o.status==='buying').length;
+  document.getElementById('cSh').textContent=orders.filter(o=>o.status==='shipping').length;
+  document.getElementById('cWD').textContent=orders.filter(o=>o.status==='waiting-deliver').length;
+  document.getElementById('cDel').textContent=orders.filter(o=>o.status==='delivering').length;
+  document.getElementById('cNR').textContent=orders.filter(o=>o.status==='not-received').length;
 }
-function stLbl(s){return s==='waiting-buy'?'🛒 انتظار الشراء':s==='buying'?'🔄 قيد الشراء':s==='shipping'?'📦 قيد الشحن':s==='waiting-deliver'?'📫 انتظار التوصيل':s==='delivering'?'🚚 قيد التوصيل':s==='not-received'?'❌ لم يستلم':s;}
-function payLbl(p){return p==='cash'?'💵 كاش':p==='transfer'?'🏦 تحويل':p==='card'?'💳 كروت':p==='paid'?'✅ تم الدفع':p;}
-function payCls(p){return p==='cash'?'pc':p==='transfer'?'pt':p==='card'?'pk':'pp';}
-function fmtDate(d){try{return new Date(d).toLocaleDateString('ar-LY',{year:'numeric',month:'short',day:'numeric'});}catch{return '';}}
+function stLbl(s){return{'waiting-buy':'🛒 انتظار الشراء','buying':'🔄 قيد الشراء','shipping':'📦 قيد الشحن','waiting-deliver':'📫 انتظار التوصيل','delivering':'🚚 قيد التوصيل','not-received':'❌ لم يستلم'}[s]||s;}
+function pyLbl(p){return{'cash':'كاش','transfer':'تحويل','card':'كروت','paid':'تم الدفع'}[p]||p;}
+function pyCls(p){return{'cash':'pc','transfer':'pt','card':'pk','paid':'pp'}[p]||'pc';}
+function fmtD(d){try{return new Date(d).toLocaleDateString('ar-LY',{year:'numeric',month:'long',day:'numeric'});}catch{return '';}}
 
 function renderOrders(){
-  updateStats();
-  ['all','waiting-buy','buying','shipping','waiting-deliver','delivering','not-received'].forEach(f=>document.getElementById('chip-'+f)?.classList.toggle('active-filter',f===curFilter));
-  const orders=getFiltered();
+  updStats();
+  ['all','waiting-buy','buying','shipping','waiting-deliver','delivering','not-received'].forEach(f=>document.getElementById('fc-'+f)?.classList.toggle('on',f===cFilt));
+  const list=gFilt();
   const el=document.getElementById('ordersList');
-  if(!orders.length){el.innerHTML=`<div class="empty"><div class="ei">📭</div><h3>لا توجد طلبيات</h3><p>اضغط طلب جديد للإضافة</p></div>`;return;}
-  el.innerHTML=[...orders].reverse().map(o=>{
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📭</div><h3>لا توجد طلبيات</h3><p>اضغط طلب جديد للإضافة</p></div>`;return;}
+  el.innerHTML=[...list].reverse().map(o=>{
     let imgs=[];try{imgs=o.images?JSON.parse(o.images):[];}catch{}
-    let sizes=[];try{sizes=o.sizes?JSON.parse(o.sizes):[];}catch{}
-    return `<div class="order-card" id="oc_${o.id}">
-      <div class="card-top">
-        <div style="display:flex;align-items:center;gap:7px"><div class="onum">#${o.num}</div><div class="odate">${fmtDate(o.created_at)}</div></div>
-        <div class="ostatus st-${o.status}">${stLbl(o.status)}</div>
+    let ozs=[];try{ozs=o.sizes?JSON.parse(o.sizes):[];}catch{}
+    return `<div class="oc">
+      <div class="oc-top">
+        <div style="display:flex;align-items:center;gap:7px"><div class="onum">#${o.num}</div><div class="odate">${fmtD(o.created_at)}</div></div>
+        <div class="ost st-${o.status}">${stLbl(o.status)}</div>
       </div>
-      ${(o.social||o.avatar)?`<div class="card-social">
-        ${o.avatar?`<img class="sav" src="${o.avatar}" onclick="openViewer('${o.avatar}')">`:`<div class="sav-ph">👤</div>`}
+      ${(o.social||o.avatar)?`<div class="oc-social">
+        ${o.avatar?`<img class="sav" src="${o.avatar}" onclick="openIV('${o.avatar.replace(/'/g,"\\'")}')">`:`<div class="sav-ph">👤</div>`}
         ${o.social?`<div class="sname">💬 ${o.social}</div>`:''}
       </div>`:''}
-      ${imgs.length?`<div class="order-imgs-row">${imgs.map((img,i)=>`<img src="${img}" onclick="openViewer('${img.replace(/'/g,"\\'")}')" alt="صورة">`).join('')}</div>`:''}
-      <div class="ocustomer">👤 ${o.customer}</div>
-      <div class="chips-row">
+      ${imgs.length?`<div class="imgs-scroll">${imgs.map(img=>`<img src="${img}" onclick="openIV('${img.replace(/'/g,"\\'")}')">`).join('')}</div>`:''}
+      <div class="ocust">👤 ${o.customer}</div>
+      <div class="cr">
         ${o.phone?`<span class="chip">📱 ${o.phone}</span>`:''}
         ${o.phone2?`<span class="chip">📲 ${o.phone2}</span>`:''}
-        ${sizes.map(s=>`<span class="chip">📏 ${s}</span>`).join('')}
+        ${ozs.map(s=>`<span class="chip">📏 ${s}</span>`).join('')}
         ${o.qty&&o.qty>1?`<span class="chip">🔢 ${o.qty} قطعة</span>`:''}
       </div>
-      ${o.address?`<div class="chips-row"><span class="chip">📍 ${o.address}</span></div>`:''}
-      <div class="price-row">
+      ${o.address?`<div class="cr"><span class="chip">📍 ${o.address}</span></div>`:''}
+      <div class="pr-row">
         ${o.price?`<div class="oprice">💰 ${Number(o.price).toLocaleString('ar')} د.ل</div>`:'<div></div>'}
-        ${o.payment?`<div class="pay-badge ${payCls(o.payment)}">${payLbl(o.payment)}</div>`:''}
+        ${o.payment?`<div class="pbadge ${pyCls(o.payment)}">${pyLbl(o.payment)}</div>`:''}
       </div>
-      ${o.tracking?`<div class="tracking-b">📦 تتبع: ${o.tracking}</div>`:''}
+      ${o.tracking?`<div class="tb-badge">📦 رقم التتبع: ${o.tracking}</div>`:''}
       ${o.note?`<div class="onote">📝 ${o.note}</div>`:''}
-      <div class="card-footer">
-        <button class="bsm be" onclick="editOrder('${o.id}')">✏️ تعديل</button>
-        <button class="bsm bp" onclick="printOrder('${o.id}')">🖨️ PDF</button>
-        <button class="bsm bd" onclick="askDelete('${o.id}','order')">🗑️ حذف</button>
+      <div class="oc-footer">
+        <button class="btn-sm btn-edit" onclick="editOrd('${o.id}')">✏️ تعديل</button>
+        <button class="btn-sm btn-pdf" onclick="genPDF('${o.id}')">🖨️ فاتورة</button>
+        <button class="btn-sm btn-del" onclick="askDel('${o.id}','order')">🗑️ حذف</button>
       </div>
     </div>`;
   }).join('');
 }
-function filterOrders(f){curFilter=f;renderOrders();}
-function searchOrders(q){curSearch=q;renderOrders();}
+function filt(f){cFilt=f;renderOrders();}
+function srch(q){cSrch=q;renderOrders();}
 
-// PDF PRINT
-async function printOrder(id){
-  const o=allOrders.find(x=>x.id===id);if(!o)return;
-  let imgs=[];try{imgs=o.images?JSON.parse(o.images):[];}catch{}
-  let sizes=[];try{sizes=o.sizes?JSON.parse(o.sizes):[];}catch{}
+/* ===== PDF - PROFESSIONAL INVOICE ===== */
+async function genPDF(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  let ozs=[];try{ozs=o.sizes?JSON.parse(o.sizes):[];}catch{}
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
-  doc.setFont('helvetica');
-  doc.setFillColor(255,107,0);doc.rect(0,0,210,35,'F');
-  doc.setTextColor(255,255,255);doc.setFontSize(20);doc.text('Salti - Order Details',105,15,{align:'center'});
-  doc.setFontSize(11);doc.text(`Order #${o.num} | ${fmtDate(o.created_at)}`,105,25,{align:'center'});
-  doc.setTextColor(0,0,0);
-  let y=45;
-  const line=(label,val)=>{if(!val)return;doc.setFontSize(10);doc.setTextColor(139,94,60);doc.text(label+':',20,y);doc.setTextColor(0,0,0);doc.text(String(val),70,y);y+=8;};
-  doc.setFillColor(255,243,232);doc.rect(15,y-5,180,10,'F');
-  doc.setTextColor(255,107,0);doc.setFontSize(11);doc.text('Customer Information',105,y+1,{align:'center'});y+=12;
-  line('Customer',o.customer);line('Phone',o.phone);line('Phone 2',o.phone2);line('Address',o.address);line('Social',o.social);
-  y+=4;doc.setFillColor(255,243,232);doc.rect(15,y-5,180,10,'F');
-  doc.setTextColor(255,107,0);doc.text('Order Information',105,y+1,{align:'center'});y+=12;
-  line('Status',stLbl(o.status));line('Size',sizes.join(', '));line('Qty',o.qty);line('Price',o.price?o.price+' LYD':'');line('Payment',payLbl(o.payment));line('Tracking',o.tracking);line('Note',o.note);
-  if(imgs.length>0){
-    y+=6;doc.setFillColor(255,243,232);doc.rect(15,y-5,180,10,'F');
-    doc.setTextColor(255,107,0);doc.text('Order Images',105,y+1,{align:'center'});y+=10;
-    let xi=20;
-    for(let i=0;i<Math.min(imgs.length,4);i++){
-      try{doc.addImage(imgs[i],'JPEG',xi,y,40,40);}catch{}
-      xi+=45;if(xi>180){xi=20;y+=45;}
-    }
-  }
-  doc.save(`order-${o.num}.pdf`);
-  showToast('✅ تم حفظ PDF');
+  const W=210,gold=[180,145,30],black=[10,10,10],white=[255,255,255],gray=[100,90,70],lightgray=[240,235,225];
+
+  // Header background
+  doc.setFillColor(...black);doc.rect(0,0,W,50,'F');
+  // Gold accent line
+  doc.setFillColor(...gold);doc.rect(0,48,W,2,'F');
+  // Store name
+  doc.setTextColor(...white);doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text(S?S.store_name:'', W/2,14,{align:'center'});
+  // App name
+  doc.setFontSize(26);doc.setFont('helvetica','bold');
+  doc.setTextColor(...gold);
+  doc.text('SALTI',W/2,30,{align:'center'});
+  // Subtitle
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.setTextColor(...white);
+  doc.text('Invoice / فاتورة',W/2,40,{align:'center'});
+
+  // Order number & date bar
+  doc.setFillColor(25,20,5);doc.rect(0,50,W,14,'F');
+  doc.setTextColor(...gold);doc.setFontSize(10);doc.setFont('helvetica','bold');
+  doc.text('Order #'+o.num, 15,59);
+  doc.setTextColor(200,185,140);doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text(fmtD(o.created_at), W-15,59,{align:'right'});
+
+  let y=76;
+
+  // Section helper
+  const section=(title)=>{
+    doc.setFillColor(30,24,5);doc.rect(12,y-4,W-24,10,'F');
+    doc.setFillColor(...gold);doc.rect(12,y-4,3,10,'F');
+    doc.setTextColor(...gold);doc.setFontSize(9);doc.setFont('helvetica','bold');
+    doc.text(title,18,y+2);
+    y+=11;
+  };
+
+  // Row helper
+  const row=(label,value,alt)=>{
+    if(!value)return;
+    if(alt){doc.setFillColor(...lightgray);doc.rect(12,y-3,W-24,7,'F');}
+    doc.setTextColor(...gray);doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text(label,18,y+1);
+    doc.setTextColor(...black);doc.setFont('helvetica','bold');
+    doc.text(String(value),80,y+1);
+    y+=8;
+  };
+
+  // Customer section
+  section('Customer Information | بيانات المستلم');
+  let alt=false;
+  if(o.customer){row('Name / الاسم',o.customer,alt);alt=!alt;}
+  if(o.phone){row('Phone / الهاتف',o.phone,alt);alt=!alt;}
+  if(o.phone2){row('Alt Phone / احتياطي',o.phone2,alt);alt=!alt;}
+  if(o.address){row('Address / العنوان',o.address,alt);alt=!alt;}
+  if(o.social){row('Social / التواصل',o.social,alt);alt=!alt;}
+
+  y+=4;
+  section('Order Details | تفاصيل الطلب');
+  alt=false;
+  row('Status / الحالة',stLbl(o.status).replace(/[^\u0600-\u06FF\s\w]/g,'').trim()||stLbl(o.status),alt);alt=!alt;
+  if(ozs.length){row('Sizes / المقاسات',ozs.join(' - '),alt);alt=!alt;}
+  if(o.qty){row('Quantity / الكمية',o.qty,alt);alt=!alt;}
+  if(o.tracking){row('Tracking / رقم التتبع',o.tracking,alt);alt=!alt;}
+  if(o.note){row('Note / ملاحظة',o.note,alt);alt=!alt;}
+
+  y+=4;
+  section('Payment | الدفع');
+  alt=false;
+  if(o.price){row('Price / السعر',Number(o.price).toLocaleString('ar')+' LYD',alt);alt=!alt;}
+  if(o.payment){row('Method / الطريقة',pyLbl(o.payment),alt);}
+
+  // Total box
+  y+=6;
+  doc.setFillColor(...black);doc.rect(12,y,W-24,16,'F');
+  doc.setFillColor(...gold);doc.rect(12,y,3,16,'F');
+  doc.setTextColor(...gold);doc.setFontSize(11);doc.setFont('helvetica','bold');
+  doc.text('Total Amount / المجموع الكلي',18,y+7);
+  doc.setFontSize(13);
+  doc.text((o.price?Number(o.price).toLocaleString('ar'):'0')+' LYD',W-15,y+8,{align:'right'});
+  y+=20;
+
+  // Footer
+  doc.setFillColor(...black);doc.rect(0,277,W,20,'F');
+  doc.setFillColor(...gold);doc.rect(0,277,W,1,'F');
+  doc.setTextColor(...gold);doc.setFontSize(8);doc.setFont('helvetica','bold');
+  doc.text('SALTI',W/2,284,{align:'center'});
+  doc.setTextColor(140,120,70);doc.setFontSize(7);doc.setFont('helvetica','normal');
+  doc.text(S?S.store_name:'',W/2,290,{align:'center'});
+
+  doc.save('salti-invoice-'+o.num+'.pdf');
+  showToast('✅ تم حفظ الفاتورة');
 }
 
-// ORDER MODAL
-function openOrderModal(id=null){
-  editId=id;avData=null;orderImgs=[];curSizes=[];
-  document.getElementById('modalTitle').textContent=id?'تعديل الطلب':'طلب جديد';
-  ['fSocial','fCustomer','fPhone','fPhone2','fAddress','fNote','fTracking'].forEach(x=>document.getElementById(x).value='');
+/* ===== ORDER MODAL ===== */
+function openOrderMo(id=null){
+  editId=id;avD=null;oImgs=[];szs=[];
+  document.getElementById('moTitle').textContent=id?'تعديل الطلب':'طلب جديد';
+  ['fSocial','fCust','fPh1','fPh2','fAddr','fNote','fTrack'].forEach(x=>document.getElementById(x).value='');
   document.getElementById('fQty').value='1';document.getElementById('fPrice').value='';
-  document.getElementById('fPayment').value='cash';document.getElementById('st1').checked=true;
-  stChanged();renderSizes();renderOrderImgArea();
+  document.getElementById('fPay').value='cash';document.getElementById('r1').checked=true;stCh();
+  rSzTags();rImgsArea();
   document.getElementById('avPh').style.display='flex';
-  const ei=document.getElementById('avPreviewImg');if(ei)ei.remove();
+  const ei=document.getElementById('avImg');if(ei)ei.remove();
   if(id){
-    const o=allOrders.find(x=>x.id===id);if(!o)return;
+    const o=orders.find(x=>x.id===id);if(!o)return;
     document.getElementById('fSocial').value=o.social||'';
-    document.getElementById('fCustomer').value=o.customer||'';
-    document.getElementById('fPhone').value=o.phone||'';
-    document.getElementById('fPhone2').value=o.phone2||'';
-    document.getElementById('fAddress').value=o.address||'';
+    document.getElementById('fCust').value=o.customer||'';
+    document.getElementById('fPh1').value=o.phone||'';
+    document.getElementById('fPh2').value=o.phone2||'';
+    document.getElementById('fAddr').value=o.address||'';
     document.getElementById('fQty').value=o.qty||1;
     document.getElementById('fPrice').value=o.price||'';
     document.getElementById('fNote').value=o.note||'';
-    document.getElementById('fTracking').value=o.tracking||'';
-    document.getElementById('fPayment').value=o.payment||'cash';
-    document.querySelectorAll('input[name=st]').forEach(r=>r.checked=r.value===o.status);
-    stChanged();
-    try{curSizes=o.sizes?JSON.parse(o.sizes):[];}catch{curSizes=[];}
-    try{orderImgs=o.images?JSON.parse(o.images):[];}catch{orderImgs=[];}
-    if(o.avatar){avData=o.avatar;showAvPreview(o.avatar);}
-    renderSizes();renderOrderImgArea();
+    document.getElementById('fTrack').value=o.tracking||'';
+    document.getElementById('fPay').value=o.payment||'cash';
+    document.querySelectorAll('input[name=st]').forEach(r=>r.checked=r.value===o.status);stCh();
+    try{szs=o.sizes?JSON.parse(o.sizes):[];}catch{szs=[];}
+    try{oImgs=o.images?JSON.parse(o.images):[];}catch{oImgs=[];}
+    if(o.avatar){avD=o.avatar;shAvPrev(o.avatar);}
+    rSzTags();rImgsArea();
   }
-  document.getElementById('orderModal').classList.add('show');
+  document.getElementById('orderMo').classList.add('show');
 }
-function closeOrderModal(){document.getElementById('orderModal').classList.remove('show');}
-function closeMO(e){if(e.target===document.getElementById('orderModal'))closeOrderModal();}
-function editOrder(id){openOrderModal(id);}
-function stChanged(){const v=document.querySelector('input[name=st]:checked')?.value;document.getElementById('trackingGrp').classList.toggle('show',v==='delivering');}
+function closeMo(id){document.getElementById(id).classList.remove('show');}
+function clMO(e,id){if(e.target===document.getElementById(id))closeMo(id);}
+function editOrd(id){openOrderMo(id);}
+function stCh(){
+  const v=document.querySelector('input[name=st]:checked')?.value;
+  // Show tracking for delivering OR not-received
+  document.getElementById('trackInp').classList.toggle('show',v==='delivering'||v==='not-received');
+}
 
-function handleAvatar(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{avData=ev.target.result;showAvPreview(avData);};r.readAsDataURL(f);}
-function showAvPreview(src){
+function hAv(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{avD=ev.target.result;shAvPrev(avD);};r.readAsDataURL(f);}
+function shAvPrev(src){
   document.getElementById('avPh').style.display='none';
-  let img=document.getElementById('avPreviewImg');
-  if(!img){img=document.createElement('img');img.id='avPreviewImg';img.className='av-img';document.getElementById('avWrap').appendChild(img);}
+  let img=document.getElementById('avImg');
+  if(!img){img=document.createElement('img');img.id='avImg';img.className='av-img';document.getElementById('avWrap').appendChild(img);}
   img.src=src;
 }
-function handleOrderImgs(e){
-  const files=Array.from(e.target.files);const rem=20-orderImgs.length;let n=0;
-  files.slice(0,rem).forEach(f=>{const r=new FileReader();r.onload=ev=>{orderImgs.push(ev.target.result);n++;if(n===Math.min(files.length,rem))renderOrderImgArea();};r.readAsDataURL(f);});
+function hImgs(e){
+  const files=Array.from(e.target.files);const rem=20-oImgs.length;let n=0;
+  files.slice(0,rem).forEach(f=>{const r=new FileReader();r.onload=ev=>{oImgs.push(ev.target.result);n++;if(n===Math.min(files.length,rem))rImgsArea();};r.readAsDataURL(f);});
 }
-function removeOrderImg(i){orderImgs.splice(i,1);renderOrderImgArea();}
-function renderOrderImgArea(){
+function rmImg(i){oImgs.splice(i,1);rImgsArea();}
+function rImgsArea(){
   const a=document.getElementById('imgsArea');
-  const th=orderImgs.map((img,i)=>`<div class="ithumb"><img src="${img}" onclick="openViewer('${img.replace(/'/g,"\\'")}")"><button class="idel" onclick="removeOrderImg(${i})">×</button></div>`).join('');
-  const ab=orderImgs.length<20?`<div class="addimg"><span class="ai">📷</span><span>إضافة</span><input type="file" accept="image/*" multiple onchange="handleOrderImgs(event)"></div>`:'';
-  a.innerHTML=th+ab;
+  a.innerHTML=oImgs.map((img,i)=>`<div class="ith"><img src="${img}" onclick="openIV('${img.replace(/'/g,"\\'")}')" ><button class="idel" onclick="rmImg(${i})">×</button></div>`).join('')+(oImgs.length<20?`<div class="aib"><span class="ai">📷</span><span>إضافة</span><input type="file" accept="image/*" multiple onchange="hImgs(event)"></div>`:'');
 }
-function addSize(){const i=document.getElementById('sizeInput');const v=i.value.trim();if(!v)return;curSizes.push(v);i.value='';renderSizes();}
-function removeSize(i){curSizes.splice(i,1);renderSizes();}
-function renderSizes(){document.getElementById('sizeTags').innerHTML=curSizes.map((s,i)=>`<div class="stag">${s}<button onclick="removeSize(${i})">×</button></div>`).join('');}
+function addSz(){const i=document.getElementById('sizeInp');const v=i.value.trim();if(!v)return;szs.push(v);i.value='';rSzTags();}
+function rmSz(i){szs.splice(i,1);rSzTags();}
+function rSzTags(){document.getElementById('sizeTags').innerHTML=szs.map((s,i)=>`<div class="stag">${s}<button onclick="rmSz(${i})">×</button></div>`).join('');}
 
 async function saveOrder(){
-  const customer=document.getElementById('fCustomer').value.trim();
+  const cust=document.getElementById('fCust').value.trim();
   const status=document.querySelector('input[name=st]:checked')?.value;
-  if(!customer)return showToast('⚠️ اسم المستلم مطلوب');
+  if(!cust)return showToast('⚠️ اسم المستلم مطلوب');
   const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='جاري الحفظ...';
-  const payload={customer,status,
-    social:document.getElementById('fSocial').value.trim(),
-    phone:document.getElementById('fPhone').value.trim(),
-    phone2:document.getElementById('fPhone2').value.trim(),
-    address:document.getElementById('fAddress').value.trim(),
-    qty:parseInt(document.getElementById('fQty').value)||1,
-    price:document.getElementById('fPrice').value||null,
-    payment:document.getElementById('fPayment').value,
-    note:document.getElementById('fNote').value.trim(),
-    tracking:status==='delivering'?document.getElementById('fTracking').value.trim():'',
-    avatar:avData||null,images:JSON.stringify(orderImgs),sizes:JSON.stringify(curSizes),
-  };
+  const pl={customer:cust,status,social:document.getElementById('fSocial').value.trim(),phone:document.getElementById('fPh1').value.trim(),phone2:document.getElementById('fPh2').value.trim(),address:document.getElementById('fAddr').value.trim(),qty:parseInt(document.getElementById('fQty').value)||1,price:document.getElementById('fPrice').value||null,payment:document.getElementById('fPay').value,note:document.getElementById('fNote').value.trim(),tracking:(status==='delivering'||status==='not-received')?document.getElementById('fTrack').value.trim():'',avatar:avD||null,images:JSON.stringify(oImgs),sizes:JSON.stringify(szs)};
   if(editId){
-    const {error}=await sb.from('orders').update(payload).eq('id',editId);
+    const {error}=await sb.from('orders').update(pl).eq('id',editId);
     if(error){showToast('❌ '+error.message);btn.disabled=false;btn.textContent='💾 حفظ الطلب';return;}
     showToast('✅ تم التعديل');
   }else{
-    const nextNum=allOrders.length>0?Math.max(...allOrders.map(o=>o.num))+1:1;
-    const {error}=await sb.from('orders').insert({...payload,store_id:store.id,num:nextNum});
+    const nNum=orders.length>0?Math.max(...orders.map(o=>o.num))+1:1;
+    const {error}=await sb.from('orders').insert({...pl,store_id:S.id,num:nNum});
     if(error){showToast('❌ '+error.message);btn.disabled=false;btn.textContent='💾 حفظ الطلب';return;}
     showToast('✅ تم إضافة الطلب');
   }
-  btn.disabled=false;btn.textContent='💾 حفظ الطلب';closeOrderModal();await loadOrders();
+  btn.disabled=false;btn.textContent='💾 حفظ الطلب';closeMo('orderMo');await loadOrders();
 }
 
-// INVENTORY
-async function loadInv(){
-  const {data}=await sb.from('inventory').select('*').eq('store_id',store.id).order('created_at',{ascending:false});
-  allInv=data||[];
-}
+/* ===== INVENTORY ===== */
+async function loadInv(){const {data}=await sb.from('inventory').select('*').eq('store_id',S.id).order('created_at',{ascending:false});inv=data||[];}
 function renderInv(){
-  const total=allInv.reduce((s,i)=>s+(parseFloat(i.price)||0),0);
-  document.getElementById('invTotal').textContent=total.toLocaleString('ar')+' د.ل';
+  const tot=inv.reduce((s,i)=>s+(parseFloat(i.price)||0),0);
+  document.getElementById('invTot').textContent=tot.toLocaleString('ar')+' د.ل';
   const g=document.getElementById('invGrid');
-  if(!allInv.length){g.innerHTML=`<div class="empty" style="grid-column:span 2"><div class="ei">🗄️</div><h3>المخزن فارغ</h3></div>`;return;}
-  g.innerHTML=allInv.map(item=>`<div class="inv-card">
-    ${item.image?`<img src="${item.image}" onclick="openViewer('${item.image.replace(/'/g,"\\'")}')">`:`<div class="iph">📦</div>`}
-    ${item.size?`<div class="isize">📏 ${item.size}</div>`:''}
-    <div class="iprice">💰 ${item.price?Number(item.price).toLocaleString('ar')+' د.ل':'—'}</div>
-    <div class="ifoot">
-      <button class="bsm bd" style="font-size:11px" onclick="askDelete('${item.id}','inv')">🗑️ حذف</button>
-    </div>
+  if(!inv.length){g.innerHTML=`<div class="empty" style="grid-column:span 2"><div class="ei">🗄️</div><h3>المخزن فارغ</h3><p>اضغط إضافة للمخزن</p></div>`;return;}
+  g.innerHTML=inv.map(item=>`<div class="icard">
+    ${item.image?`<img src="${item.image}" onclick="openIV('${item.image.replace(/'/g,"\\'")}')">`:`<div class="iph">📦</div>`}
+    ${item.size?`<div class="isi">📏 ${item.size}</div>`:''}
+    <div class="ipr">💰 ${item.price?Number(item.price).toLocaleString('ar')+' د.ل':'—'}</div>
+    <div style="margin-top:7px"><button class="btn-sm btn-del" onclick="askDel('${item.id}','inv')">🗑️ حذف</button></div>
   </div>`).join('');
 }
-function openInvModal(){invImgData=null;document.getElementById('invSize').value='';document.getElementById('invPrice').value='';document.getElementById('invImgArea').innerHTML=`<div class="addimg"><span class="ai">📷</span><span>إضافة</span><input type="file" accept="image/*" onchange="handleInvImg(event)"></div>`;document.getElementById('invModal').classList.add('show');}
-function closeInvModal(){document.getElementById('invModal').classList.remove('show');}
-function closeInvMO(e){if(e.target===document.getElementById('invModal'))closeInvModal();}
-function handleInvImg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{invImgData=ev.target.result;document.getElementById('invImgArea').innerHTML=`<div class="ithumb"><img src="${invImgData}" onclick="openViewer('${invImgData.replace(/'/g,"\\'")}')"><button class="idel" onclick="invImgData=null;document.getElementById('invImgArea').innerHTML='<div class=addimg><span class=ai>📷</span><span>إضافة</span><input type=file accept=image/* onchange=handleInvImg(event)></div>'">×</button></div>`;};r.readAsDataURL(f);}
-async function saveInvItem(){
-  const btn=document.getElementById('invSaveBtn');btn.disabled=true;btn.textContent='جاري الحفظ...';
-  const {error}=await sb.from('inventory').insert({store_id:store.id,image:invImgData||null,size:document.getElementById('invSize').value.trim(),price:document.getElementById('invPrice').value||null});
+function openInvMo(){invImgD=null;document.getElementById('invSz').value='';document.getElementById('invPr').value='';document.getElementById('invImgArea').innerHTML=`<div class="aib"><span class="ai">📷</span><span>إضافة</span><input type="file" accept="image/*" onchange="hInvImg(event)"></div>`;document.getElementById('invMo').classList.add('show');}
+function hInvImg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{invImgD=ev.target.result;document.getElementById('invImgArea').innerHTML=`<div class="ith"><img src="${invImgD}" onclick="openIV('${invImgD.replace(/'/g,"\\'")}')" ><button class="idel" onclick="invImgD=null;document.getElementById('invImgArea').innerHTML='<div class=aib><span class=ai>📷</span><span>إضافة</span><input type=file accept=image/* onchange=hInvImg(event)></div>'">×</button></div>`;};r.readAsDataURL(f);}
+async function saveInv(){
+  const btn=document.getElementById('invSaveBtn');btn.disabled=true;btn.textContent='جاري...';
+  const {error}=await sb.from('inventory').insert({store_id:S.id,image:invImgD||null,size:document.getElementById('invSz').value.trim(),price:document.getElementById('invPr').value||null});
   if(error){showToast('❌ '+error.message);btn.disabled=false;btn.textContent='💾 حفظ';return;}
-  showToast('✅ تمت الإضافة');btn.disabled=false;btn.textContent='💾 حفظ';closeInvModal();await loadInv();renderInv();
+  showToast('✅ تمت الإضافة');btn.disabled=false;btn.textContent='💾 حفظ';closeMo('invMo');await loadInv();renderInv();
 }
 
-// BLACKLIST
-async function loadBL(){
-  const {data}=await sb.from('blacklist').select('*').eq('store_id',store.id).order('created_at',{ascending:false});
-  allBL=data||[];
-}
+/* ===== BLACKLIST ===== */
+async function loadBL(){const {data}=await sb.from('blacklist').select('*').eq('store_id',S.id).order('created_at',{ascending:false});bl=data||[];}
 function renderBL(){
-  const el=document.getElementById('blacklistItems');
-  if(!allBL.length){el.innerHTML=`<div class="empty"><div class="ei">✅</div><h3>القائمة فارغة</h3><p>لا يوجد أشخاص محذرون</p></div>`;return;}
-  el.innerHTML=allBL.map(b=>`<div class="bl-card">
-    <div class="brat ${b.rating==='verybad'?'rat-verybad':'rat-bad'}">${b.rating==='verybad'?'😡 سيء جداً':'😕 سيء'}</div>
-    <div class="bl-name">👤 ${b.customer||'—'}</div>
-    <div class="bl-chips">
+  const el=document.getElementById('blList');
+  if(!bl.length){el.innerHTML=`<div class="empty"><div class="ei">✅</div><h3>القائمة فارغة</h3><p>لا يوجد أشخاص محذرون</p></div>`;return;}
+  el.innerHTML=bl.map(b=>`<div class="blcard">
+    <div class="brat ${b.rating==='verybad'?'rvb':'rb'}">${b.rating==='verybad'?'😡 سيء جداً':'😕 سيء'}</div>
+    <div class="blname">👤 ${b.customer||'—'}</div>
+    <div class="cr">
       ${b.social?`<span class="chip">💬 ${b.social}</span>`:''}
       ${b.phone?`<span class="chip">📱 ${b.phone}</span>`:''}
       ${b.address?`<span class="chip">📍 ${b.address}</span>`:''}
     </div>
-    <div style="margin-top:8px;display:flex;gap:6px">
-      <button class="bsm bd" onclick="askDelete('${b.id}','bl')">🗑️ حذف</button>
-    </div>
+    <div style="margin-top:8px"><button class="btn-sm btn-del" onclick="askDel('${b.id}','bl')">🗑️ حذف</button></div>
   </div>`).join('');
 }
-function openBLModal(){['blSocial','blCustomer','blPhone','blAddress'].forEach(x=>document.getElementById(x).value='');document.getElementById('blRating').value='bad';document.getElementById('blModal').classList.add('show');}
-function closeBLModal(){document.getElementById('blModal').classList.remove('show');}
-function closeBLMO(e){if(e.target===document.getElementById('blModal'))closeBLModal();}
-async function saveBLItem(){
-  const {error}=await sb.from('blacklist').insert({store_id:store.id,social:document.getElementById('blSocial').value.trim(),customer:document.getElementById('blCustomer').value.trim(),phone:document.getElementById('blPhone').value.trim(),address:document.getElementById('blAddress').value.trim(),rating:document.getElementById('blRating').value});
+function openBLMo(){['blSocial','blCust','blPh','blAddr'].forEach(x=>document.getElementById(x).value='');document.getElementById('blRat').value='bad';document.getElementById('blMo').classList.add('show');}
+async function saveBL(){
+  const {error}=await sb.from('blacklist').insert({store_id:S.id,social:document.getElementById('blSocial').value.trim(),customer:document.getElementById('blCust').value.trim(),phone:document.getElementById('blPh').value.trim(),address:document.getElementById('blAddr').value.trim(),rating:document.getElementById('blRat').value});
   if(error){showToast('❌ '+error.message);return;}
-  showToast('✅ تمت الإضافة');closeBLModal();await loadBL();renderBL();
+  showToast('✅ تمت الإضافة');closeMo('blMo');await loadBL();renderBL();
 }
 
-// DELETE
-function askDelete(id,type){delId=id;delType=type;document.getElementById('confirmOv').classList.add('show');}
-function closeConfirm(){delId=null;delType=null;document.getElementById('confirmOv').classList.remove('show');}
-async function doDelete(){
-  if(!delId)return;
-  let err=null;
+/* ===== DELETE ===== */
+function askDel(id,type){delId=id;delType=type;document.getElementById('cov').classList.add('show');}
+function closeCov(){delId=null;delType=null;document.getElementById('cov').classList.remove('show');}
+async function doDel(){
+  if(!delId)return;let err=null;
   if(delType==='order'){const r=await sb.from('orders').delete().eq('id',delId);err=r.error;}
   else if(delType==='inv'){const r=await sb.from('inventory').delete().eq('id',delId);err=r.error;}
   else if(delType==='bl'){const r=await sb.from('blacklist').delete().eq('id',delId);err=r.error;}
-  if(err){showToast('❌ خطأ في الحذف');closeConfirm();return;}
-  closeConfirm();showToast('🗑️ تم الحذف');
+  if(err){showToast('❌ خطأ في الحذف');closeCov();return;}
+  closeCov();showToast('🗑️ تم الحذف');
   if(delType==='order'){await loadOrders();}
   else if(delType==='inv'){await loadInv();renderInv();}
   else if(delType==='bl'){await loadBL();renderBL();}
 }
 
-// IMAGE VIEWER
-function openViewer(src){const v=document.getElementById('imgViewer');document.getElementById('viewerImg').src=src;v.classList.add('show');}
-function closeViewer(){document.getElementById('imgViewer').classList.remove('show');}
-
-// TOAST
+function openIV(src){document.getElementById('ivImg').src=src;document.getElementById('iv').classList.add('show');}
+function closeIV(){document.getElementById('iv').classList.remove('show');}
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
 init();
