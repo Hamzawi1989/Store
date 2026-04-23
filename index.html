@@ -76,27 +76,28 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 .tb-menu{width:36px;height:36px;border:1px solid var(–border);border-radius:10px;background:var(–bg3);color:var(–gold);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 /* SIDEBAR - fully opaque, from right */
-.sb-ov{position:fixed;inset:0;z-index:300;display:none;}
+.sb-ov{position:fixed;inset:0;z-index:300;display:none;background:transparent;}
 .sb-ov.show{display:block;}
 .sidebar{
-position:fixed;top:0;right:-100%;width:80%;max-width:300px;height:100vh;
-background:var(–bg2);z-index:301;
+position:fixed;top:0;right:-100%;width:82%;max-width:310px;height:100vh;
+background:#111111;z-index:301;
 transition:right 0.3s cubic-bezier(0.4,0,0.2,1);
-overflow-y:auto;border-left:1px solid var(–border);
+overflow-y:auto;border-left:2px solid var(–border);
 display:flex;flex-direction:column;
+isolation:isolate;
 }
-.sidebar.open{right:0;box-shadow:-12px 0 40px rgba(0,0,0,0.8);}
-.sb-head{background:var(–bg3);padding:36px 16px 20px;border-bottom:1px solid var(–border);position:relative;flex-shrink:0;}
+.sidebar.open{right:0;box-shadow:-16px 0 60px rgba(0,0,0,1);}
+.sb-head{background:#1A1A1A;padding:36px 16px 20px;border-bottom:2px solid var(–border);position:relative;flex-shrink:0;}
 .sb-close{position:absolute;top:12px;left:12px;width:30px;height:30px;background:var(–bg4);border:1px solid var(–border);border-radius:8px;color:var(–gold);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .sb-store{font-size:16px;font-weight:900;color:var(–text);margin-bottom:3px;}
 .sb-sub{font-size:11px;color:var(–muted);font-weight:600;}
-.sb-nav{padding:12px 10px;flex:1;}
+.sb-nav{padding:12px 10px;flex:1;background:#111111;}
 .ni{display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:12px;cursor:pointer;transition:all 0.18s;margin-bottom:4px;font-weight:700;font-size:14px;color:var(–text2);border:1px solid transparent;}
-.ni:hover{background:var(–gold-pale);color:var(–gold);border-color:var(–border2);}
-.ni.on{background:var(–gold-soft);color:var(–gold);border-color:var(–border);}
+.ni:hover{background:#222222;color:var(–gold);border-color:var(–border2);}
+.ni.on{background:#2A2200;color:var(–gold);border-color:var(–border);}
 .ni .ic{font-size:20px;width:26px;text-align:center;}
 .sb-divider{height:1px;background:var(–border2);margin:8px 10px;}
-.sb-bottom{padding:16px 10px 28px;border-top:1px solid var(–border2);text-align:center;}
+.sb-bottom{padding:16px 10px 28px;border-top:1px solid var(–border2);text-align:center;background:#111111;}
 .sb-bottom-logo{font-size:34px;font-weight:900;color:var(–gold);letter-spacing:-2px;cursor:pointer;}
 .sb-bottom-sub{font-size:10px;color:var(–muted);font-weight:600;margin-top:2px;}
 
@@ -118,11 +119,17 @@ display:flex;flex-direction:column;
 .stat-l{font-size:10px;color:var(–muted);font-weight:600;margin-top:1px;}
 
 /* FILTER */
-.filter-bar{padding:8px 14px 4px;display:flex;gap:5px;overflow-x:auto;}
+.filter-bar{padding:8px 14px 4px;display:flex;gap:6px;overflow-x:auto;}
 .filter-bar::-webkit-scrollbar{display:none;}
-.fc{padding:6px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;border:1px solid var(–border2);color:var(–text2);background:var(–bg3);transition:all 0.18s;}
-.fc.all{background:var(–gold-pale);color:var(–gold);border-color:var(–border);}
-.fc.on{border-color:var(–gold)!important;color:var(–gold)!important;background:var(–gold-pale)!important;}
+.fc{padding:8px 12px;border-radius:16px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;border:1px solid var(–border2);color:var(–text2);background:#1A1A1A;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:fit-content;}
+.fc .fc-emoji{font-size:14px;}
+.fc .fc-label{font-size:11px;white-space:nowrap;}
+.fc .fc-count{font-size:11px;font-weight:900;color:var(–gold);}
+.fc.all{background:var(–gold-pale);border-color:var(–border);}
+.fc.all .fc-label{color:var(–gold);}
+.fc.on{border-color:var(–gold)!important;background:var(–gold-pale)!important;}
+.fc.on .fc-label{color:var(–gold)!important;}
+.fc.on .fc-count{color:var(–gold2)!important;}
 
 /* SEARCH */
 .search-wrap{padding:6px 14px 8px;position:relative;}
@@ -367,15 +374,15 @@ display:flex;flex-direction:column;
       </div>
     </div>
     <div class="filter-bar">
-      <div class="fc all on" id="fc-all" onclick="filt('all')">📦 الكل <span id="cAll">0</span></div>
-      <div class="fc" id="fc-waiting-buy" onclick="filt('waiting-buy')">🛒 انتظار <span id="cWB">0</span></div>
-      <div class="fc" id="fc-buying" onclick="filt('buying')">🔄 قيد الشراء <span id="cBuy">0</span></div>
-      <div class="fc" id="fc-shipping" onclick="filt('shipping')">📦 شحن <span id="cSh">0</span></div>
-      <div class="fc" id="fc-waiting-deliver" onclick="filt('waiting-deliver')">📫 توصيل <span id="cWD">0</span></div>
-      <div class="fc" id="fc-delivering" onclick="filt('delivering')">🚚 قيد التوصيل <span id="cDel">0</span></div>
-      <div class="fc" id="fc-not-received" onclick="filt('not-received')">❌ لم يستلم <span id="cNR">0</span></div>
+      <div class="fc all on" id="fc-all" onclick="filt('all')"><span class="fc-emoji">📦</span><span class="fc-label">الكل</span><span class="fc-count" id="cAll">0</span></div>
+      <div class="fc" id="fc-waiting-buy" onclick="filt('waiting-buy')"><span class="fc-emoji">🛒</span><span class="fc-label">انتظار الشراء</span><span class="fc-count" id="cWB">0</span></div>
+      <div class="fc" id="fc-buying" onclick="filt('buying')"><span class="fc-emoji">🔄</span><span class="fc-label">قيد الشراء</span><span class="fc-count" id="cBuy">0</span></div>
+      <div class="fc" id="fc-shipping" onclick="filt('shipping')"><span class="fc-emoji">📦</span><span class="fc-label">قيد الشحن</span><span class="fc-count" id="cSh">0</span></div>
+      <div class="fc" id="fc-waiting-deliver" onclick="filt('waiting-deliver')"><span class="fc-emoji">📫</span><span class="fc-label">انتظار التوصيل</span><span class="fc-count" id="cWD">0</span></div>
+      <div class="fc" id="fc-delivering" onclick="filt('delivering')"><span class="fc-emoji">🚚</span><span class="fc-label">قيد التوصيل</span><span class="fc-count" id="cDel">0</span></div>
+      <div class="fc" id="fc-not-received" onclick="filt('not-received')"><span class="fc-emoji">❌</span><span class="fc-label">لم يستلم</span><span class="fc-count" id="cNR">0</span></div>
     </div>
-    <div class="search-wrap"><span class="si">🔍</span><input type="text" placeholder="ابحث باسم أو رقم الطلب..." oninput="srch(this.value)"></div>
+    <div class="search-wrap"><span class="si">🔍</span><input type="text" placeholder="ابحث باسم أو رقم الطلب أو رقم التتبع..." oninput="srch(this.value)"></div>
     <div id="ordersList"></div>
   </div>
 
@@ -626,7 +633,18 @@ async function loadOrders(){
 function gFilt(){
   let o=[...orders];
   if(cFilt!=='all')o=o.filter(x=>x.status===cFilt);
-  if(cSrch){const q=cSrch.toLowerCase();o=o.filter(x=>x.customer.toLowerCase().includes(q)||String(x.num).includes(q)||(x.phone&&x.phone.includes(q))||(x.social&&x.social.toLowerCase().includes(q)));}
+  if(cSrch){
+    const q=cSrch.toLowerCase().trim();
+    o=o.filter(x=>
+      x.customer.toLowerCase().includes(q)||
+      String(x.num).includes(q)||
+      (x.phone&&x.phone.includes(q))||
+      (x.phone2&&x.phone2.includes(q))||
+      (x.social&&x.social.toLowerCase().includes(q))||
+      (x.tracking&&x.tracking.toLowerCase().includes(q))||
+      (x.address&&x.address.toLowerCase().includes(q))
+    );
+  }
   return o;
 }
 function updStats(){
