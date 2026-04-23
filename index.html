@@ -160,9 +160,8 @@ isolation:isolate;
 .sav{width:40px;height:40px;border-radius:10px;object-fit:cover;border:1px solid var(–border);cursor:pointer;}
 .sav-ph{width:40px;height:40px;border-radius:10px;background:var(–bg3);display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid var(–border2);}
 .sname{font-weight:800;font-size:13px;color:var(–gold);}
-.imgs-row{display:flex;gap:5px;overflow-x:auto;margin-bottom:8px;padding-bottom:2px;}
+.imgs-row{display:flex;gap:5px;overflow-x:auto;margin-bottom:8px;padding-bottom:2px;align-items:flex-start;}
 .imgs-row::-webkit-scrollbar{height:2px;}
-.imgs-row img{width:68px;height:68px;object-fit:cover;border-radius:8px;border:1px solid var(–border);flex-shrink:0;cursor:pointer;}
 .ocust{font-size:14px;font-weight:800;color:var(–text);margin-bottom:5px;}
 .chips{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;}
 .chip{font-size:11px;color:var(–text2);background:var(–bg3);padding:3px 8px;border-radius:7px;font-weight:600;border:1px solid var(–border2);}
@@ -556,7 +555,52 @@ function compressImg(dataUrl,maxW=600,quality=0.65){
   });
 }
 
-async function init(){
+/* ===== IMAGE MANAGEMENT IN CARDS ===== */
+async function replaceImg(e,orderId,index){
+  const f=e.target.files[0];if(!f)return;
+  const o=orders.find(x=>x.id===orderId);if(!o)return;
+  let imgs=[];try{imgs=o.images?JSON.parse(o.images):[];}catch{}
+  const r=new FileReader();
+  r.onload=async ev=>{
+    const compressed=await compressImg(ev.target.result,800,0.7);
+    imgs[index]=compressed;
+    const {error}=await sb.from('orders').update({images:JSON.stringify(imgs)}).eq('id',orderId);
+    if(error){showSucc('خطأ في استبدال الصورة');return;}
+    await loadOrders();
+    showSucc('تم استبدال الصورة');
+  };r.readAsDataURL(f);
+}
+
+async function deleteImgFromOrder(orderId,index){
+  const o=orders.find(x=>x.id===orderId);if(!o)return;
+  let imgs=[];try{imgs=o.images?JSON.parse(o.images):[];}catch{}
+  imgs.splice(index,1);
+  const {error}=await sb.from('orders').update({images:JSON.stringify(imgs)}).eq('id',orderId);
+  if(error){showSucc('خطأ في حذف الصورة');return;}
+  await loadOrders();
+  showSucc('تم حذف الصورة');
+}
+
+async function addImgToOrder(e,orderId){
+  const files=Array.from(e.target.files);
+  const o=orders.find(x=>x.id===orderId);if(!o)return;
+  let imgs=[];try{imgs=o.images?JSON.parse(o.images):[];}catch{}
+  const rem=20-imgs.length;if(rem<=0)return;
+  let done=0;const toAdd=files.slice(0,rem);
+  toAdd.forEach(f=>{
+    const r=new FileReader();
+    r.onload=async ev=>{
+      const compressed=await compressImg(ev.target.result,800,0.7);
+      imgs.push(compressed);done++;
+      if(done===toAdd.length){
+        const {error}=await sb.from('orders').update({images:JSON.stringify(imgs)}).eq('id',orderId);
+        if(!error){await loadOrders();showSucc('تمت إضافة الصور');}
+      }
+    };r.readAsDataURL(f);
+  });
+}
+
+async function appInit(){
   const {data:{session}}=await sb.auth.getSession();
   if(session){U=session.user;await loadStore();}
   else showAuth();
@@ -683,8 +727,22 @@ function renderOrders(){
           ${o.avatar?`<img class="sav" src="${o.avatar}" onclick="openIV('${o.avatar.replace(/'/g,"\\'")}')">`:`<div class="sav-ph">👤</div>`}
           ${o.social?`<div class="sname">💬 ${o.social}</div>`:''}
         </div>`:''}
-        ${imgs.length?`<div class="imgs-row">${imgs.map(img=>`<img loading="lazy" src="${img}" onclick="openIV('${img.replace(/'/g,"\\'")}')">` ).join('')}</div>`:''}
-        <div class="ocust">👤 ${o.customer}</div>
+        ${imgs.length?`<div class="imgs-row">${imgs.map((img,i)=>`
+          <div class="img-wrap" style="position:relative;flex-shrink:0;">
+            <img loading="lazy" src="${img}" onclick="openIV('${img.replace(/'/g,"\\'")}')" style="width:68px;height:68px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;">
+            <label style="position:absolute;bottom:2px;right:2px;width:20px;height:20px;background:rgba(212,175,55,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;" title="استبدال">
+              🔄<input type="file" accept="image/*" style="display:none" onchange="replaceImg(event,'${o.id}',${i})">
+            </label>
+            <button onclick="deleteImgFromOrder('${o.id}',${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(239,68,68,0.9);color:white;border:none;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>
+          </div>`).join('')}
+          ${imgs.length<20?`<label class="add-img-card" style="width:68px;height:68px;border:1px dashed var(--gold);border-radius:8px;background:var(--gold-pale);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--gold);font-weight:700;flex-shrink:0;gap:2px;">
+            <span style="font-size:18px;">📷</span><span>إضافة</span>
+            <input type="file" accept="image/*" style="display:none" multiple onchange="addImgToOrder(event,'${o.id}')">
+          </label>`:''}
+        </div>`:`<label class="add-img-card" style="width:68px;height:68px;border:1px dashed var(--gold);border-radius:8px;background:var(--gold-pale);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--gold);font-weight:700;gap:2px;margin-bottom:8px;">
+          <span style="font-size:18px;">📷</span><span>إضافة صورة</span>
+          <input type="file" accept="image/*" style="display:none" multiple onchange="addImgToOrder(event,'${o.id}')">
+        </label>`}        <div class="ocust">👤 ${o.customer}</div>
         <div class="chips">
           ${o.phone?`<span class="chip">📱 ${o.phone}</span>`:''}
           ${o.phone2?`<span class="chip">📲 ${o.phone2}</span>`:''}
@@ -710,7 +768,7 @@ function renderOrders(){
 function filt(f){cFilt=f;renderOrders();}
 function srch(q){cSrch=q;renderOrders();}
 
-/* ===== PDF - ARABIC ===== */
+/* ===== PDF - WHITE ARABIC PROFESSIONAL ===== */
 async function genPDF(id){
   const o=orders.find(x=>x.id===id);if(!o)return;
   let ozs=[];try{ozs=o.sizes?JSON.parse(o.sizes):[];}catch{}
@@ -718,112 +776,152 @@ async function genPDF(id){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF('p','mm','a4');
   const W=210,H=297;
-  const C={bg:[8,8,8],dark:[18,14,2],gold:[180,145,30],gold2:[212,175,55],white:[255,255,255],text:[40,32,8],muted:[120,100,50],row1:[252,248,235],row2:[244,238,218],line:[200,170,60]};
 
-  // Background
-  doc.setFillColor(...C.bg);doc.rect(0,0,W,H,'F');
+  // ---- خلفية بيضاء ----
+  doc.setFillColor(255,255,255);
+  doc.rect(0,0,W,H,'F');
 
-  // Top gold bar
-  doc.setFillColor(...C.gold2);doc.rect(0,0,W,4,'F');
+  // ---- الهيدر - خط علوي ذهبي رفيع ----
+  doc.setFillColor(180,145,30);
+  doc.rect(0,0,W,2,'F');
 
-  // Header block
-  doc.setFillColor(...C.dark);doc.rect(0,4,W,52,'F');
+  // ---- اسم المتجر في المنتصف بخط كبير ----
+  doc.setTextColor(20,16,2);
+  doc.setFontSize(32);
+  doc.setFont('helvetica','bold');
+  doc.text(sName, W/2, 28, {align:'center'});
 
-  // Store name - right side (Arabic RTL feel)
-  doc.setTextColor(...C.gold);doc.setFontSize(11);doc.setFont('helvetica','bold');
-  doc.text(sName,W-15,16,{align:'right'});
+  // ---- خط فاصل ذهبي تحت الاسم ----
+  doc.setDrawColor(180,145,30);
+  doc.setLineWidth(0.8);
+  doc.line(20,34,W-20,34);
 
-  // Divider under store name
-  doc.setDrawColor(...C.gold);doc.setLineWidth(0.4);
-  doc.line(15,20,W-15,20);
+  // ---- كلمة فاتورة ----
+  doc.setTextColor(150,120,30);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','normal');
+  doc.text('فاتورة', W/2, 42, {align:'center'});
 
-  // Store name BIG (centered)
-  doc.setTextColor(...C.white);doc.setFontSize(24);doc.setFont('helvetica','bold');
-  doc.text(sName,W/2,36,{align:'center'});
+  // ---- رقم الطلب والتاريخ ----
+  doc.setTextColor(100,90,60);
+  doc.setFontSize(9);
+  doc.text('رقم الطلب: #'+o.num, W-20, 52, {align:'right'});
+  doc.text('التاريخ: '+fmtD(o.created_at), 20, 52);
 
-  // فاتورة label
-  doc.setTextColor(...C.gold);doc.setFontSize(10);doc.setFont('helvetica','normal');
-  doc.text('فاتورة بيع',W/2,46,{align:'center'});
+  // ---- خط فاصل رفيع ----
+  doc.setDrawColor(220,210,180);
+  doc.setLineWidth(0.3);
+  doc.line(20,57,W-20,57);
 
-  // Bottom gold bar of header
-  doc.setFillColor(...C.gold2);doc.rect(0,56,W,2,'F');
+  let y=68;
+  const margin=20;
+  const colW=W-margin*2;
 
-  // Order info bar
-  doc.setFillColor(...C.dark);doc.rect(0,58,W,13,'F');
-  doc.setTextColor(...C.gold);doc.setFontSize(9);doc.setFont('helvetica','bold');
-  doc.text('رقم الطلب: #'+o.num, W-15,66,{align:'right'});
-  doc.setTextColor(180,155,80);doc.setFontSize(8);doc.setFont('helvetica','normal');
-  doc.text(fmtD(o.created_at),15,66);
-  doc.setFillColor(...C.gold2);doc.rect(0,71,W,0.8,'F');
-
-  let y=82;
-
-  // Section helper
+  // ---- دالة عنوان قسم ----
   function sec(title){
-    doc.setFillColor(...C.dark);doc.rect(14,y-5,W-28,11,'F');
-    doc.setFillColor(...C.gold2);doc.rect(14,y-5,3,11,'F');
-    doc.setTextColor(...C.gold);doc.setFontSize(9);doc.setFont('helvetica','bold');
-    doc.text(title,20,y+2);
-    y+=13;
+    doc.setFillColor(245,240,220);
+    doc.rect(margin,y-4,colW,10,'F');
+    doc.setDrawColor(180,145,30);
+    doc.setLineWidth(0.5);
+    doc.rect(margin,y-4,colW,10,'S');
+    doc.setTextColor(100,70,10);
+    doc.setFontSize(10);
+    doc.setFont('helvetica','bold');
+    doc.text(title, W-margin-3, y+2, {align:'right'});
+    y+=14;
   }
 
-  let rowToggle=false;
+  // ---- دالة صف بيانات ----
+  let rowAlt=false;
   function row(label,val){
     if(!val&&val!==0)return;
-    doc.setFillColor(...(rowToggle?C.row2:C.row1));
-    doc.rect(14,y-4,W-28,9,'F');
-    doc.setTextColor(...C.muted);doc.setFontSize(8);doc.setFont('helvetica','normal');
-    doc.text(label,18,y+1);
-    doc.setTextColor(...C.text);doc.setFont('helvetica','bold');doc.setFontSize(9);
-    doc.text(String(val),W-18,y+1,{align:'right'});
-    rowToggle=!rowToggle;y+=9;
+    const valStr=String(val);
+    if(rowAlt){
+      doc.setFillColor(252,249,240);
+      doc.rect(margin,y-4,colW,9,'F');
+    }
+    doc.setDrawColor(235,225,200);
+    doc.setLineWidth(0.2);
+    doc.line(margin,y+5,margin+colW,y+5);
+    doc.setTextColor(100,90,60);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica','normal');
+    doc.text(label, margin+3, y+1);
+    doc.setTextColor(20,16,2);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text(valStr, W-margin-3, y+1, {align:'right'});
+    rowAlt=!rowAlt;
+    y+=9;
   }
 
-  // CUSTOMER
+  // ---- بيانات المستلم ----
   sec('بيانات المستلم');
-  rowToggle=false;
-  if(o.social)row('الحساب / واتساب',o.social);
-  if(o.customer)row('اسم المستلم',o.customer);
-  if(o.phone)row('رقم الهاتف',o.phone);
-  if(o.phone2)row('هاتف احتياطي',o.phone2);
-  if(o.address)row('عنوان التوصيل',o.address);
+  rowAlt=false;
+  if(o.social) row('الحساب / واتساب', o.social);
+  if(o.customer) row('اسم المستلم', o.customer);
+  if(o.phone) row('رقم الهاتف', o.phone);
+  if(o.phone2) row('هاتف احتياطي', o.phone2);
+  if(o.address) row('عنوان التوصيل', o.address);
 
-  y+=5;
+  y+=6;
+
+  // ---- تفاصيل الطلب ----
   sec('تفاصيل الطلب');
-  rowToggle=false;
-  row('حالة الطلب',stLbl(o.status).replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim());
-  if(ozs.length)row('المقاسات',ozs.join(' - '));
-  if(o.qty)row('الكمية',o.qty+' قطعة');
-  if(o.tracking)row('رقم التتبع',o.tracking);
-  if(o.note)row('ملاحظة',o.note);
+  rowAlt=false;
+  const stAr={'waiting-buy':'انتظار الشراء','buying':'قيد الشراء','shipping':'قيد الشحن','waiting-deliver':'انتظار التوصيل','delivering':'قيد التوصيل','not-received':'لم يستلم'};
+  row('حالة الطلب', stAr[o.status]||o.status);
+  if(ozs.length) row('المقاسات', ozs.join(' - '));
+  if(o.qty) row('الكمية', o.qty+' قطعة');
+  if(o.tracking) row('رقم تتبع التوصيل', o.tracking);
+  if(o.note) row('ملاحظة', o.note);
 
-  y+=5;
+  y+=6;
+
+  // ---- معلومات الدفع ----
   sec('معلومات الدفع');
-  rowToggle=false;
-  if(o.payment)row('طريقة الدفع',pyLbl(o.payment));
+  rowAlt=false;
+  const pyAr={'cash':'كاش','transfer':'تحويل بنكي','card':'بطاقة','paid':'تم الدفع'};
+  if(o.payment) row('طريقة الدفع', pyAr[o.payment]||o.payment);
+  if(o.price) row('السعر', Number(o.price).toLocaleString('ar')+' دينار ليبي');
 
-  // TOTAL BOX
-  y+=7;
-  doc.setFillColor(...C.dark);doc.rect(14,y,W-28,20,'F');
-  doc.setFillColor(...C.gold2);doc.rect(14,y,3,20,'F');
-  doc.setTextColor(...C.gold);doc.setFontSize(12);doc.setFont('helvetica','bold');
-  doc.text('المبلغ الإجمالي',20,y+9);
-  doc.setFontSize(15);
-  doc.text((o.price?Number(o.price).toLocaleString():'0')+' د.ل',W-18,y+10,{align:'right'});
-  doc.setTextColor(160,135,55);doc.setFontSize(8);doc.setFont('helvetica','normal');
-  doc.text('دينار ليبي',W-18,y+16,{align:'right'});
+  y+=8;
 
-  // FOOTER
-  doc.setFillColor(...C.dark);doc.rect(0,H-24,W,24,'F');
-  doc.setFillColor(...C.gold2);doc.rect(0,H-24,W,1,'F');
-  doc.setTextColor(...C.gold);doc.setFontSize(11);doc.setFont('helvetica','bold');
-  doc.text(sName,W/2,H-14,{align:'center'});
-  doc.setTextColor(130,105,45);doc.setFontSize(7);doc.setFont('helvetica','normal');
-  doc.text('شكراً لتعاملكم معنا',W/2,H-8,{align:'center'});
-  doc.setFillColor(...C.gold2);doc.rect(0,H-1,W,1,'F');
+  // ---- صندوق الإجمالي ----
+  doc.setFillColor(20,16,2);
+  doc.rect(margin,y,colW,18,'F');
+  doc.setFillColor(180,145,30);
+  doc.rect(margin,y,3,18,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  doc.text('المبلغ الاجمالي', margin+8, y+7);
+  doc.setFontSize(14);
+  doc.setTextColor(212,175,55);
+  doc.text((o.price?Number(o.price).toLocaleString():'0')+' د.ل', W-margin-4, y+8, {align:'right'});
+  doc.setFontSize(8);
+  doc.setTextColor(180,160,100);
+  doc.text('دينار ليبي', W-margin-4, y+14, {align:'right'});
+
+  // ---- فوتر ----
+  doc.setDrawColor(180,145,30);
+  doc.setLineWidth(0.5);
+  doc.line(20,H-20,W-20,H-20);
+  doc.setTextColor(120,100,40);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','bold');
+  doc.text(sName, W/2, H-13, {align:'center'});
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(160,140,80);
+  doc.text('شكراً لتعاملكم معنا', W/2, H-7, {align:'center'});
+
+  // ---- خط ذهبي سفلي ----
+  doc.setFillColor(180,145,30);
+  doc.rect(0,H-2,W,2,'F');
 
   doc.save(sName+'-فاتورة-'+o.num+'.pdf');
-  showSucc('✓ تم حفظ الفاتورة');
+  showSucc('تم حفظ الفاتورة بنجاح');
 }
 
 /* SUCCESS */
@@ -1008,7 +1106,7 @@ async function doDel(){
 function openIV(src){document.getElementById('ivImg').src=src;document.getElementById('iv').classList.add('show');}
 function closeIV(){document.getElementById('iv').classList.remove('show');}
 
-init();
+appInit();
 </script>
 
 </body>
