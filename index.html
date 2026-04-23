@@ -240,10 +240,13 @@ isolation:isolate;
 .byes{flex:1;padding:10px;background:var(–red);color:white;border:none;border-radius:10px;font-family:‘Cairo’,sans-serif;font-weight:800;cursor:pointer;}
 
 /* IMAGE VIEWER */
-.iv{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:500;align-items:center;justify-content:center;}
+.iv{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
 .iv.show{display:flex;}
-.iv img{max-width:95vw;max-height:88vh;border-radius:10px;object-fit:contain;}
+.iv img{max-width:95vw;max-height:75vh;border-radius:10px;object-fit:contain;cursor:pointer;}
 .iv-x{position:absolute;top:16px;right:16px;width:38px;height:38px;background:rgba(212,175,55,0.15);border:1px solid var(–border);border-radius:50%;color:var(–gold);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.iv-actions{display:flex;gap:12px;}
+.iv-del-btn{padding:12px 28px;background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid rgba(239,68,68,0.4);border-radius:14px;font-family:‘Cairo’,sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s;}
+.iv-del-btn:hover{background:rgba(239,68,68,0.3);}
 
 /* INVENTORY */
 .inv-total{background:var(–bg2);border:1px solid var(–border);border-radius:13px;padding:12px 15px;margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;}
@@ -527,9 +530,26 @@ isolation:isolate;
   </div>
 </div>
 
-<div class="iv" id="iv" onclick="closeIV()">
+<div class="iv" id="iv">
   <button class="iv-x" onclick="closeIV()">✕</button>
-  <img id="ivImg" src="" alt="">
+  <img id="ivImg" src="" alt="" onclick="closeIV()">
+  <div class="iv-actions" id="ivActions" style="display:none">
+    <button class="iv-del-btn" onclick="askDelViewImg()">🗑️ حذف هذه الصورة</button>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE IMAGE -->
+
+<div class="cov" id="covImg">
+  <div class="cbox">
+    <div class="ci">🖼️</div>
+    <h3>حذف الصورة؟</h3>
+    <p>سيتم حذف هذه الصورة نهائياً من الطلب.</p>
+    <div class="cbts">
+      <button class="bno" onclick="closeImgConfirm()">إلغاء</button>
+      <button class="byes" onclick="confirmDelViewImg()">حذف نهائياً</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -726,14 +746,12 @@ function renderOrders(){
         ${(o.social||o.avatar)?`<div class="oc-social">
           ${o.avatar?`<img class="sav" src="${o.avatar}" onclick="openIV('${o.avatar.replace(/'/g,"\\'")}')">`:`<div class="sav-ph">👤</div>`}
           ${o.social?`<div class="sname">💬 ${o.social}</div>`:''}
-        </div>`:''}
-        ${imgs.length?`<div class="imgs-row">${imgs.map((img,i)=>`
+        </div>`:''}        ${imgs.length?`<div class="imgs-row">${imgs.map((img,i)=>`
           <div class="img-wrap" style="position:relative;flex-shrink:0;">
-            <img loading="lazy" src="${img}" onclick="openIV('${img.replace(/'/g,"\\'")}')" style="width:68px;height:68px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;">
+            <img loading="lazy" src="${img}" onclick="openIV('${img.replace(/'/g,"\\'").replace(/\n/g,'')}','${o.id}',${i})" style="width:68px;height:68px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;">
             <label style="position:absolute;bottom:2px;right:2px;width:20px;height:20px;background:rgba(212,175,55,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;" title="استبدال">
               🔄<input type="file" accept="image/*" style="display:none" onchange="replaceImg(event,'${o.id}',${i})">
             </label>
-            <button onclick="deleteImgFromOrder('${o.id}',${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(239,68,68,0.9);color:white;border:none;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>
           </div>`).join('')}
           ${imgs.length<20?`<label class="add-img-card" style="width:68px;height:68px;border:1px dashed var(--gold);border-radius:8px;background:var(--gold-pale);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--gold);font-weight:700;flex-shrink:0;gap:2px;">
             <span style="font-size:18px;">📷</span><span>إضافة</span>
@@ -1103,8 +1121,31 @@ async function doDel(){
   else if(delType==='bl'){await loadBL();renderBL();}
 }
 
-function openIV(src){document.getElementById('ivImg').src=src;document.getElementById('iv').classList.add('show');}
-function closeIV(){document.getElementById('iv').classList.remove('show');}
+let ivOrderId=null,ivImgIndex=null;
+
+function openIV(src,orderId=null,index=null){
+  document.getElementById('ivImg').src=src;
+  document.getElementById('iv').classList.add('show');
+  ivOrderId=orderId;ivImgIndex=index;
+  const acts=document.getElementById('ivActions');
+  acts.style.display=(orderId!==null&&index!==null)?'flex':'none';
+}
+function closeIV(){
+  document.getElementById('iv').classList.remove('show');
+  ivOrderId=null;ivImgIndex=null;
+}
+function askDelViewImg(){
+  document.getElementById('covImg').classList.add('show');
+}
+function closeImgConfirm(){
+  document.getElementById('covImg').classList.remove('show');
+}
+async function confirmDelViewImg(){
+  closeImgConfirm();
+  if(ivOrderId===null||ivImgIndex===null)return;
+  await deleteImgFromOrder(ivOrderId,ivImgIndex);
+  closeIV();
+}
 
 appInit();
 </script>
