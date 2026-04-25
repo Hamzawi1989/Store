@@ -576,6 +576,22 @@ isolation:isolate;
   </div>
 </div>
 
+<!-- TRACKING INPUT OVERLAY -->
+
+<div class="cov" id="trackInputOv">
+  <div class="cbox" style="max-width:360px;text-align:right;">
+    <div class="ci">📦</div>
+    <h3 style="margin-bottom:8px;">رقم تتبع التوصيل</h3>
+    <p style="margin-bottom:14px;">أدخل رقم التتبع أو اتركه فارغاً</p>
+    <input type="text" id="trackInputVal" placeholder="رقم التتبع (اختياري)"
+      style="width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:11px;font-family:'Cairo',sans-serif;font-size:14px;background:var(--bg3);color:var(--text);outline:none;margin-bottom:14px;text-align:right;">
+    <div class="cbts">
+      <button class="bno" onclick="closeTrackingInput()">إلغاء</button>
+      <button class="byes" style="background:linear-gradient(135deg,var(--gold3),var(--gold));color:#0A0A0A;" onclick="saveTrackingAndStatus()">حفظ</button>
+    </div>
+  </div>
+</div>
+
 <!-- STATUS PICKER -->
 
 <div class="st-picker-ov" id="stPickerOv">
@@ -1224,20 +1240,46 @@ function closeStatusPicker(){
   document.getElementById('stPickerOv').classList.remove('show');
   pickerOrderId=null;
 }
+let pickerOrderId_saved=null;
+let pendingStatus=null;
+
 async function selectStatus(newStatus){
   if(!pickerOrderId)return;
   const o=orders.find(x=>x.id===pickerOrderId);
   if(!o){closeStatusPicker();return;}
   if(o.status===newStatus){closeStatusPicker();return;}
+
+  const needsTracking=(newStatus==='delivering'||newStatus==='not-received');
+  const oid=pickerOrderId;
+  const currentTrack=o.tracking||'';
   closeStatusPicker();
-  let trackVal=o.tracking||'';
-  if((newStatus==='delivering'||newStatus==='not-received')&&!trackVal){
-    const t=prompt('أدخل رقم التتبع (اختياري — اضغط إلغاء للتخطي):','');
-    if(t!==null)trackVal=t;
+
+  if(needsTracking){
+    showTrackingInput(oid,newStatus,currentTrack);
+  } else {
+    const {error}=await sb.from('orders').update({status:newStatus}).eq('id',oid);
+    if(!error){await loadOrders();showSucc('تم تحديث مرحلة الطلب');}
+    else showSucc('خطأ في التحديث — حاول مجدداً');
   }
-  const {error}=await sb.from('orders').update({status:newStatus,tracking:trackVal}).eq('id',pickerOrderId);
+}
+
+function showTrackingInput(orderId,status,currentTracking){
+  pickerOrderId_saved=orderId;
+  pendingStatus=status;
+  document.getElementById('trackInputVal').value=currentTracking||'';
+  document.getElementById('trackInputOv').classList.add('show');
+}
+function closeTrackingInput(){
+  document.getElementById('trackInputOv').classList.remove('show');
+  pickerOrderId_saved=null;pendingStatus=null;
+}
+async function saveTrackingAndStatus(){
+  const track=document.getElementById('trackInputVal').value.trim();
+  if(!pickerOrderId_saved||!pendingStatus){closeTrackingInput();return;}
+  const {error}=await sb.from('orders').update({status:pendingStatus,tracking:track}).eq('id',pickerOrderId_saved);
+  closeTrackingInput();
   if(!error){await loadOrders();showSucc('تم تحديث مرحلة الطلب');}
-  else showSucc('خطأ في التحديث');
+  else showSucc('خطأ في التحديث — حاول مجدداً');
 }
 
 </script>
