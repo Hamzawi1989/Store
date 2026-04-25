@@ -10,8 +10,19 @@
 <meta name="apple-mobile-web-app-title" content="سلتي">
 <meta name="theme-color" content="#0A0A0A">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+// Load scripts dynamically with fallback
+function loadScript(urls, cb) {
+  var url = urls.shift();
+  var s = document.createElement('script');
+  s.src = url;
+  s.onload = cb;
+  s.onerror = function() { if(urls.length) loadScript(urls, cb); else cb(); };
+  document.head.appendChild(s);
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 :root{
   --bg:#0A0A0A;--bg2:#111111;--bg3:#1A1A1A;--bg4:#222222;
@@ -148,7 +159,20 @@ isolation:isolate;
 .oc-num{font-size:13px;font-weight:900;color:#0A0A0A;}
 .oc-date{font-size:10px;color:rgba(0,0,0,0.6);font-weight:600;}
 .oc-body{padding:13px;}
-.oc-status-row{display:flex;align-items:center;justify-content:flex-end;margin-bottom:8px;}
+.oc-status-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.btn-change-st{padding:5px 12px;background:var(–gold-pale);color:var(–gold);border:1px solid var(–border);border-radius:10px;font-family:‘Cairo’,sans-serif;font-size:11px;font-weight:800;cursor:pointer;}
+
+/* STATUS PICKER */
+.st-picker-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:350;align-items:flex-end;justify-content:center;}
+.st-picker-ov.show{display:flex;}
+.st-picker{background:#111111;border-radius:22px 22px 0 0;border-top:1px solid var(–border);width:100%;max-width:500px;padding:20px 16px 32px;animation:slideUp 0.25s ease;}
+.st-picker-title{font-size:15px;font-weight:900;color:var(–gold);margin-bottom:14px;text-align:center;}
+.st-picker-opts{display:flex;flex-direction:column;gap:8px;}
+.st-opt{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border:1px solid var(–border2);border-radius:13px;cursor:pointer;background:#1A1A1A;transition:all 0.15s;font-weight:700;font-size:14px;color:var(–text);}
+.st-opt:hover{border-color:var(–gold);background:#2A2200;}
+.st-opt.current{border-color:var(–gold);background:#2A2200;color:var(–gold);}
+.st-opt .st-check{color:var(–gold);font-size:16px;}
+.st-cancel{width:100%;padding:13px;background:#1A1A1A;border:1px solid var(–border2);border-radius:13px;font-family:‘Cairo’,sans-serif;font-size:14px;font-weight:800;color:var(–text2);cursor:pointer;margin-top:10px;}
 .ost{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;border:1px solid transparent;}
 .st-waiting-buy{background:rgba(234,179,8,0.12);color:#FDE047;border-color:rgba(234,179,8,0.3);}
 .st-buying{background:rgba(249,115,22,0.12);color:#FB923C;border-color:rgba(249,115,22,0.3);}
@@ -184,9 +208,9 @@ isolation:isolate;
 .fab{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(–gold3),var(–gold),var(–gold2));color:#0A0A0A;border:none;padding:13px 26px;border-radius:30px;font-family:‘Cairo’,sans-serif;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 5px 20px rgba(212,175,55,0.45);display:flex;align-items:center;gap:6px;z-index:90;}
 
 /* MODAL */
-.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;align-items:flex-end;justify-content:center;}
+.mo{display:none;position:fixed;inset:0;background:#000000;z-index:200;align-items:flex-end;justify-content:center;overscroll-behavior:contain;}
 .mo.show{display:flex;}
-.modal{background:var(–bg2);border-radius:22px 22px 0 0;border-top:1px solid var(–border);width:100%;max-width:500px;max-height:93vh;overflow-y:auto;padding:16px 14px 30px;animation:slideUp 0.28s ease;}
+.modal{background:#111111;border-radius:22px 22px 0 0;border-top:2px solid var(–border);width:100%;max-width:500px;max-height:93vh;overflow-y:auto;padding:16px 14px 30px;animation:slideUp 0.28s ease;overscroll-behavior:contain;}
 .modal::-webkit-scrollbar{display:none;}
 .mh{width:38px;height:4px;background:var(–border);border-radius:3px;margin:0 auto 14px;}
 .mt{font-size:16px;font-weight:900;margin-bottom:13px;display:flex;align-items:center;gap:7px;color:var(–gold);}
@@ -413,7 +437,7 @@ isolation:isolate;
 
 <!-- ORDER MODAL -->
 
-<div class="mo" id="orderMo" onclick="clMO(event,'orderMo')">
+<div class="mo" id="orderMo">
   <div class="modal">
     <div class="mh"></div>
     <div class="mt">📝 <span id="moTitle">طلب جديد</span></div>
@@ -477,7 +501,7 @@ isolation:isolate;
 
 <!-- INV MODAL -->
 
-<div class="mo" id="invMo" onclick="clMO(event,'invMo')">
+<div class="mo" id="invMo">
   <div class="modal">
     <div class="mh"></div>
     <div class="mt">🗄️ إضافة للمخزن</div>
@@ -495,7 +519,7 @@ isolation:isolate;
 
 <!-- BL MODAL -->
 
-<div class="mo" id="blMo" onclick="clMO(event,'blMo')">
+<div class="mo" id="blMo">
   <div class="modal">
     <div class="mh"></div>
     <div class="mt">⚠️ إضافة لقائمة شوفه</div>
@@ -552,9 +576,28 @@ isolation:isolate;
   </div>
 </div>
 
+<!-- STATUS PICKER -->
+
+<div class="st-picker-ov" id="stPickerOv">
+  <div class="st-picker">
+    <div class="st-picker-title">تغيير مرحلة الطلب</div>
+    <div class="st-picker-opts" id="stPickerOpts"></div>
+    <button class="st-cancel" onclick="closeStatusPicker()">إلغاء</button>
+  </div>
+</div>
+
 <script>
 const SBU='https://hwbtxiijddixlzpljxtc.supabase.co',SBK='sb_publishable_dLuNN_oiFxsN_f4Z3oxfVA_gucBDrVy';
-const {createClient}=supabase;const sb=createClient(SBU,SBK);
+let sb=null;
+function initSB(){
+  if(typeof supabase==='undefined'){
+    setTimeout(initSB,200);return;
+  }
+  const {createClient}=supabase;
+  sb=createClient(SBU,SBK);
+  appInit();
+}
+initSB();
 let U=null,S=null,orders=[],inv=[],bl=[];
 let cFilt='all',cSrch='',editId=null,delId=null,delType=null;
 let avD=null,oImgs=[],szs=[],invImgD=null;
@@ -736,13 +779,17 @@ function renderOrders(){
   el.innerHTML=[...list].reverse().map(o=>{
     let ozs=[];try{ozs=o.sizes?JSON.parse(o.sizes):[];}catch{}
     let imgs=[];try{imgs=o.images?JSON.parse(o.images):[];}catch{}
+    const timeStr=o.created_at?new Date(o.created_at).toLocaleTimeString('ar-LY',{hour:'2-digit',minute:'2-digit'}):'';
     return `<div class="oc" id="oc_${o.id}">
       <div class="oc-header">
-        <span class="oc-num">طلب رقم #${o.num}</span>
-        <span class="oc-date">${fmtD(o.created_at)}</span>
+        <span class="oc-num">رقم #${o.num}</span>
+        <span class="oc-date">${fmtD(o.created_at)} ${timeStr}</span>
       </div>
       <div class="oc-body">
-        <div class="oc-status-row"><div class="ost st-${o.status}">${stLbl(o.status)}</div></div>
+        <div class="oc-status-row">
+          <div class="ost st-${o.status}">${stLbl(o.status)}</div>
+          <button class="btn-change-st" onclick="openStatusPicker('${o.id}')">تغيير المرحلة ▾</button>
+        </div>
         ${(o.social||o.avatar)?`<div class="oc-social">
           ${o.avatar?`<img class="sav" src="${o.avatar}" onclick="openIV('${o.avatar.replace(/'/g,"\\'")}')">`:`<div class="sav-ph">👤</div>`}
           ${o.social?`<div class="sname">💬 ${o.social}</div>`:''}
@@ -977,7 +1024,10 @@ function openOrderMo(id=null){
     if(o.avatar){avD=o.avatar;shAvPrev(o.avatar);}
     rSzTags();rImgsArea();
   }
-  document.getElementById('orderMo').classList.add('show');
+  const mo=document.getElementById('orderMo');
+  mo.classList.add('show');
+  // Scroll modal to top
+  setTimeout(()=>{const m=mo.querySelector('.modal');if(m)m.scrollTop=0;},50);
 }
 function closeMo(id){document.getElementById(id).classList.remove('show');}
 function clMO(e,id){if(e.target===document.getElementById(id))closeMo(id);}
@@ -1046,11 +1096,13 @@ async function saveOrder(){
   }
   btn.disabled=false;btn.textContent='💾 حفظ الطلب';
   closeMo('orderMo');
-  // Go to orders page and scroll to top
   goP('orders');
   window.scrollTo({top:0,behavior:'smooth'});
   await loadOrders();
-  setTimeout(()=>showSucc(isEdit?'✓ تم تعديل الطلب بنجاح':'✓ تم إضافة طلبك بنجاح'),200);
+  setTimeout(()=>{
+    showSucc(isEdit?'تم تعديل الطلب بنجاح':'تم إضافة طلبك بنجاح');
+    if(!isEdit){setTimeout(()=>openOrderMo(),1900);}
+  },200);
 }
 
 /* INVENTORY */
@@ -1147,7 +1199,47 @@ async function confirmDelViewImg(){
   closeIV();
 }
 
-appInit();
+/* ===== STATUS QUICK PICKER ===== */
+let pickerOrderId=null;
+const allStatuses=[
+  {v:'waiting-buy',l:'انتظار الشراء'},
+  {v:'buying',l:'قيد الشراء'},
+  {v:'shipping',l:'قيد الشحن'},
+  {v:'waiting-deliver',l:'انتظار التوصيل'},
+  {v:'delivering',l:'قيد التوصيل'},
+  {v:'not-received',l:'لم يستلم'}
+];
+function openStatusPicker(orderId){
+  pickerOrderId=orderId;
+  const o=orders.find(x=>x.id===orderId);if(!o)return;
+  const opts=document.getElementById('stPickerOpts');
+  opts.innerHTML=allStatuses.map(s=>`
+    <div class="st-opt ${o.status===s.v?'current':''}" onclick="selectStatus('${s.v}')">
+      <span>${s.l}</span>
+      ${o.status===s.v?'<span class="st-check">✓ الحالة الحالية</span>':''}
+    </div>`).join('');
+  document.getElementById('stPickerOv').classList.add('show');
+}
+function closeStatusPicker(){
+  document.getElementById('stPickerOv').classList.remove('show');
+  pickerOrderId=null;
+}
+async function selectStatus(newStatus){
+  if(!pickerOrderId)return;
+  const o=orders.find(x=>x.id===pickerOrderId);
+  if(!o){closeStatusPicker();return;}
+  if(o.status===newStatus){closeStatusPicker();return;}
+  closeStatusPicker();
+  let trackVal=o.tracking||'';
+  if((newStatus==='delivering'||newStatus==='not-received')&&!trackVal){
+    const t=prompt('أدخل رقم التتبع (اختياري — اضغط إلغاء للتخطي):','');
+    if(t!==null)trackVal=t;
+  }
+  const {error}=await sb.from('orders').update({status:newStatus,tracking:trackVal}).eq('id',pickerOrderId);
+  if(!error){await loadOrders();showSucc('تم تحديث مرحلة الطلب');}
+  else showSucc('خطأ في التحديث');
+}
+
 </script>
 
 </body>
